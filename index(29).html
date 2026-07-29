@@ -1,0 +1,3498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CEO Conversation Tracker</title>
+<style>
+:root{
+  --navy:#17365d;--blue:#2f75b5;--bg:#f5f7fb;--line:#d8dee8;
+  --green:#2e7d32;--amber:#a86800;--red:#b42318;--muted:#667085
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:#1f2937}
+header{background:var(--navy);color:#fff;padding:20px 26px;display:flex;justify-content:space-between;gap:16px;align-items:center}
+header h1{font-size:22px;margin:0}header p{margin:4px 0 0;opacity:.76;font-size:13px}
+button,.file-btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 12px;font-weight:600;cursor:pointer}
+.primary{background:var(--blue);border-color:var(--blue);color:#fff}.danger{color:var(--red)}
+main{max-width:1400px;margin:auto;padding:22px}
+.top{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.stat,.panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 5px 18px rgba(23,54,93,.06)}
+.stat{padding:15px}.stat small{color:var(--muted);font-weight:700}.stat strong{display:block;font-size:28px;color:var(--navy);margin-top:5px}
+.meeting{padding:14px;display:grid;grid-template-columns:180px 1fr;gap:12px;margin-bottom:14px}
+.meeting-date-badge{background:#d9eaf7;color:#17365d}
+.metrics-panel{margin-bottom:14px;padding:0;overflow:hidden}
+.metrics-heading{background:#17212b;color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.metrics-heading h2{font-size:16px;margin:0}.metrics-heading small{opacity:.72}
+.metrics-heading-actions{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end}
+.metrics-heading-actions button{padding:7px 10px;font-size:12px}
+.metric-group-title{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.metric-group-title button{padding:3px 6px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;font-size:10px;border-radius:5px}
+.metric-row-actions{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap}
+.metric-move{min-width:30px;padding:5px 8px;font-weight:800}
+.metric-move:disabled{opacity:.35;cursor:not-allowed}
+.metric-row-actions button{padding:4px 6px;font-size:10px;border-radius:5px}
+.metric-row-actions .remove-metric{color:var(--red)}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.metric-group{border-right:1px solid var(--line);min-width:0}.metric-group:last-child{border-right:0}
+.metric-group-title{color:#fff;font-size:14px;font-weight:800;padding:9px 10px;text-transform:uppercase;letter-spacing:.2px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.metric-group[data-group="RUN"] .metric-group-title{background:#008c95}
+.metric-group[data-group="PROTECT"] .metric-group-title{background:#c55a11}
+.metric-group[data-group="PEOPLE"] .metric-group-title{background:#8064a2}
+.metric-group[data-group="CONTROL"] .metric-group-title{background:#548235}
+.metric-row{display:grid;grid-template-columns:minmax(0,1fr) 112px;border-bottom:1px solid var(--line);background:#fff}
+.metric-row:last-child{border-bottom:0}
+.metric-info{padding:8px 9px;min-width:0}
+.metric-name{font-size:12px;font-weight:700;color:#5c6f82;line-height:1.2;margin-bottom:5px}
+.metric-settings{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);flex-wrap:wrap}
+.metric-settings input{width:64px;padding:4px 5px;font-size:11px;border-radius:5px}
+.metric-settings select{width:auto;padding:4px 5px;font-size:10px;border-radius:5px}
+.metric-value{padding:7px 9px;text-align:center;display:grid;align-content:center;gap:3px}
+.metric-value-wrap{display:flex;align-items:center;justify-content:center;gap:3px}
+.metric-value input{width:76px;padding:4px 5px;font-size:20px;font-weight:800;color:#0b4174;text-align:right;border:0;border-bottom:1px solid #b8c4d0;border-radius:0;background:transparent}
+.metric-unit{font-size:12px;font-weight:700;color:#0b4174}
+.metric-rag{font-size:11px;font-weight:800;padding:3px 6px;border-radius:4px}
+.metric-rag.green{background:#e2f0d9;color:#375623}
+.metric-rag.amber{background:#fff2cc;color:#805300}
+.metric-rag.red{background:#f4cccc;color:#b42318}
+.metric-trend{font-size:18px;line-height:1}
+.metric-monthly-trend{grid-column:1/-1;border-top:1px dashed #d8dee8;background:#fbfcfe;padding:6px 9px 7px}
+.metric-trend-header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+.metric-trend-header span{font-size:9px;text-transform:uppercase;letter-spacing:.35px;font-weight:800;color:var(--muted)}
+.metric-trend-header button{padding:2px 6px;font-size:9px;border-radius:5px}
+.metric-sparkline{width:100%;height:38px;display:block;overflow:visible}
+.metric-sparkline-line{fill:none;stroke:#2f75b5;stroke-width:2}
+.metric-sparkline-target{stroke:#a86800;stroke-width:1;stroke-dasharray:4 3}
+.metric-sparkline-dot{fill:#fff;stroke:#2f75b5;stroke-width:1.5}
+.metric-sparkline-dot.current{fill:#2f75b5}
+.metric-month-points{display:grid;grid-template-columns:repeat(var(--month-count),minmax(0,1fr));gap:3px;margin-top:2px}
+.metric-month-point{text-align:center;min-width:0}
+.metric-month-point small{display:block;font-size:8px;color:var(--muted);white-space:nowrap}
+.metric-month-point strong{display:block;font-size:9px;color:#344054;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric-trend-empty{font-size:9px;color:var(--muted);padding:8px 0;text-align:center}
+.metric-trend-modal{width:min(920px,100%)}
+.metric-trend-chart-large{border:1px solid var(--line);border-radius:10px;background:#fbfcfe;padding:12px;margin-bottom:14px}
+.metric-trend-chart-large svg{width:100%;height:220px;display:block}
+.metric-trend-table-wrap{overflow:auto;max-height:360px;border:1px solid var(--line);border-radius:10px}
+.metric-trend-table{width:100%;border-collapse:collapse}
+.metric-trend-table th{background:#eef2f6;color:#475467;font-size:10px;text-transform:uppercase;text-align:left;padding:8px;border-bottom:1px solid var(--line);position:sticky;top:0}
+.metric-trend-table td{padding:8px;border-bottom:1px solid var(--line);font-size:12px}
+.metric-trend-table tr:last-child td{border-bottom:0}
+.metric-history-note{padding:8px 12px;background:#f7f9fc;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+.projects-panel{margin-bottom:14px;padding:0;overflow:hidden}
+.projects-heading{background:#243447;color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.projects-heading h2{font-size:16px;margin:0}.projects-heading small{opacity:.75}
+.project-summary{display:grid;grid-template-columns:repeat(6,minmax(100px,1fr));gap:0;border-bottom:1px solid var(--line)}
+.project-stat{padding:12px;background:#fff;border-right:1px solid var(--line);text-align:center}
+.project-stat:last-child{border-right:0}
+.project-stat small{display:block;color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase}
+.project-stat strong{display:block;font-size:23px;color:var(--navy);margin-top:4px}
+.project-stat .portfolio-green{color:var(--green)}
+.project-stat .portfolio-yellow{color:var(--amber)}
+.project-stat .portfolio-red{color:var(--red)}
+.project-table-wrap{overflow-x:auto}
+.project-table{width:100%;border-collapse:collapse;background:#fff}
+.project-table th{background:#eef2f6;text-align:left;color:#475467;font-size:11px;text-transform:uppercase;padding:9px;border-bottom:1px solid var(--line)}
+.project-table td{padding:9px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:12px}
+.project-table tr:last-child td{border-bottom:0}
+.project-name{font-weight:800;color:var(--navy);min-width:180px}
+.project-note{color:var(--muted);min-width:220px}
+.project-status-select{min-width:88px;padding:6px;font-weight:800}
+.project-status-badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800}
+.project-status-badge.green{background:#e2f0d9;color:#375623}
+.project-status-badge.yellow{background:#fff2cc;color:#805300}
+.project-status-badge.red{background:#f4cccc;color:#b42318}
+.project-progress{display:flex;align-items:center;gap:8px;min-width:145px}
+.project-progress input{width:64px;padding:6px;text-align:right}
+.progress-track{height:8px;background:#e9edf2;border-radius:999px;overflow:hidden;flex:1;min-width:55px}
+.progress-fill{height:100%;background:var(--blue);border-radius:999px}
+.project-actions{display:flex;gap:5px;white-space:nowrap}
+.project-actions button{padding:5px 7px;font-size:10px}
+label{display:block;font-size:12px;font-weight:700;color:#475467;margin-bottom:5px}
+input,select,textarea{width:100%;border:1px solid #cfd6df;border-radius:8px;padding:9px;font:inherit}
+textarea{min-height:90px;resize:vertical}
+.filters{display:grid;grid-template-columns:minmax(240px,1fr) 175px 150px 170px 140px;gap:9px;margin-bottom:12px}
+.discussion-panel{padding:0;overflow:hidden}
+.discussion-heading{display:flex;justify-content:space-between;gap:18px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);background:#f8fafc}
+.discussion-heading h2{margin:0 0 3px;font-size:18px}
+.discussion-heading small{color:var(--muted)}
+.discussion-heading-right{display:flex;align-items:center;gap:9px;max-width:68%}
+.discussion-heading-right>button{white-space:nowrap}
+.discussion-status-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff;flex:1;min-width:330px}
+.discussion-status-cell{padding:8px 12px;text-align:center;border-right:1px solid var(--line)}
+.discussion-status-cell:last-child{border-right:0}
+.discussion-status-cell small{display:block;font-size:10px;text-transform:uppercase;font-weight:800;letter-spacing:.35px}
+.discussion-status-cell strong{display:block;font-size:20px;margin-top:2px}
+.discussion-status-cell.discuss{background:#fff8e1;color:#765500}
+.discussion-status-cell.waiting{background:#eef5ff;color:#244b78}
+.discussion-status-cell.closed{background:#eef8ee;color:#285b2f}
+.discussion-table-wrap{overflow:auto}
+.discussion-table{width:100%;border-collapse:collapse;min-width:1120px}
+.discussion-table th{background:#eef2f6;color:#344054;font-size:11px;text-transform:uppercase;letter-spacing:.35px;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line)}
+.discussion-sort-button{display:inline-flex;align-items:center;gap:5px;padding:0;border:0;background:transparent;border-radius:0;color:inherit;font-size:inherit;font-weight:800;text-transform:uppercase;letter-spacing:inherit;cursor:pointer;white-space:nowrap}
+.discussion-sort-button:hover{color:var(--blue)}
+.discussion-sort-button:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.discussion-sort-icon{display:inline-block;min-width:10px;font-size:12px;color:#7b8794}
+.discussion-sort-button.active .discussion-sort-icon{color:var(--blue)}
+.discussion-table th[aria-sort="ascending"],.discussion-table th[aria-sort="descending"]{background:#e4edf7}
+.discussion-table td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:12px}
+.discussion-table tr:last-child td{border-bottom:0}
+.discussion-table tbody tr:hover{background:#fafcff}
+.discussion-table tbody tr.overdue{box-shadow:inset 4px 0 0 var(--red)}
+.discussion-topic{min-width:260px}
+.discussion-topic-title{font-weight:800;color:#24364a;font-size:13px;margin-bottom:4px}
+.discussion-topic-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.discussion-owner{min-width:115px}
+.discussion-due{white-space:nowrap}
+.discussion-outcome{min-width:280px;max-width:420px}
+.discussion-outcome strong{display:block;color:#344054;font-size:11px;margin-bottom:3px}
+.discussion-outcome-text{color:#475467;line-height:1.35}
+.discussion-feedback{margin-top:5px;padding-left:8px;border-left:3px solid #5b8f4a;color:#315c25;line-height:1.35}
+.item-status-select{min-width:145px;font-weight:800;padding:7px 28px 7px 9px}
+.item-status-select.discuss{background:#fff8e1;border-color:#e3bd45;color:#765500}
+.item-status-select.waiting{background:#eef5ff;border-color:#9abbe0;color:#244b78}
+.item-status-select.closed{background:#eef8ee;border-color:#9fc3a3;color:#285b2f}
+.row-detail-button{white-space:nowrap}
+.item-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.item-detail-box{background:#f7f9fc;border:1px solid var(--line);border-radius:9px;padding:10px}
+.detail-status-select{margin-top:2px;font-weight:800}
+.detail-status-note{font-size:10px;color:var(--muted);margin-top:5px}
+.status-manager-modal{width:min(900px,100%)}
+.status-manager-help{color:var(--muted);font-size:12px;margin:-4px 0 14px}
+.status-manager-list{display:grid;gap:8px}
+.status-manager-row{display:grid;grid-template-columns:minmax(180px,1fr) 130px 170px auto;gap:8px;align-items:center;padding:9px;border:1px solid var(--line);border-radius:9px;background:#f8fafc}
+.status-manager-row input,.status-manager-row select{padding:7px}
+.status-row-actions{display:flex;gap:5px;justify-content:flex-end}
+.status-row-actions button{padding:6px 8px;font-size:10px}
+.status-add-panel{margin-top:16px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#f7f9fc}
+.status-add-panel h3{margin:0 0 10px;font-size:14px;color:var(--navy)}
+.status-add-grid{display:grid;grid-template-columns:minmax(190px,1fr) 140px 190px auto;gap:9px;align-items:end}
+.status-closed-toggle{display:flex;align-items:center;gap:7px;margin:0 0 8px;font-size:11px}
+.status-closed-toggle input{width:auto;margin:0}
+.status-system-note{font-size:9px;color:var(--muted);margin-top:4px}
+.item-detail-box.full{grid-column:1/-1}
+.item-detail-box small{display:block;color:var(--muted);font-weight:800;text-transform:uppercase;margin-bottom:4px}
+.item-detail-box div{white-space:pre-wrap;line-height:1.4}
+.actions{display:flex;flex-wrap:wrap;gap:4px}.actions button{font-size:10px;padding:4px 7px}
+.empty{text-align:center;color:var(--muted);padding:24px 8px;font-size:13px}
+.modal-bg{position:fixed;inset:0;background:#0007;display:none;place-items:center;padding:18px;z-index:1000}
+.modal-bg.open{display:grid}
+.modal{background:#fff;border-radius:14px;padding:20px;width:min(760px,100%);max-height:94vh;overflow:auto}
+.modal h2{margin-top:0;color:var(--navy)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}
+.agenda,.history-view{display:none}.agenda.active,.history-view.active{display:block}
+.agenda .panel,.history-view .panel{padding:20px}.agenda h2,.history-view h2{color:var(--navy)}
+.agenda-section{margin-top:20px}.agenda-section h3{border-bottom:2px solid #d9eaf7;padding-bottom:6px}
+.agenda-item{padding:9px 0;border-bottom:1px solid var(--line)}
+.history-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.history-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
+.duplicate-badge{display:inline-block;margin-left:8px;padding:3px 7px;border-radius:999px;background:#fee4e2;color:var(--red);font-size:11px;font-weight:800}
+.archive-list{display:grid;gap:12px}
+.archive-card{background:#fff;border:1px solid var(--line);border-radius:11px;padding:14px}
+.archive-card summary{cursor:pointer;font-weight:700;color:var(--navy)}
+.archive-meta{font-size:12px;color:var(--muted);margin:6px 0 10px}
+.archive-section{margin-top:12px}.archive-section h4{margin:0 0 6px}
+.timeline{display:grid;gap:10px;margin-top:12px}
+.timeline-entry{border-left:3px solid var(--blue);padding:9px 11px;background:#f7f9fc;border-radius:0 8px 8px 0}
+.timeline-entry small{display:block;color:var(--muted);margin-bottom:4px}
+.inline-history{border:1px solid var(--line);border-radius:9px;background:#f7f9fc;max-height:260px;overflow:auto}
+.inline-history-empty{padding:14px;color:var(--muted);font-size:12px;text-align:center}
+.comment-entry{display:grid;grid-template-columns:165px minmax(0,1fr) auto;gap:12px;padding:10px 12px;border-bottom:1px solid var(--line);background:#fff}
+.comment-entry:last-child{border-bottom:0}
+.comment-time{font-size:11px;color:var(--muted);font-weight:700;line-height:1.35}
+.comment-text{font-size:12px;white-space:pre-wrap;line-height:1.4}
+.comment-entry.comment .comment-text{font-weight:600;color:#26384a}
+.comment-entry.activity .comment-text{color:var(--muted);font-style:italic}
+.history-entry-actions{display:flex;align-items:flex-start}
+.history-delete{padding:4px 7px;font-size:10px;color:var(--red);background:#fff;border:1px solid #efc0bc;border-radius:6px}
+.history-delete:hover{background:#fff0ef}
+.feedback-entry{background:#fff7d6;border:2px solid #d6a800;border-radius:10px;padding:12px}
+.feedback-entry label{color:#6b5200;font-size:13px}
+.feedback-entry textarea{background:#fffdf3;border-color:#d6a800;min-height:115px}
+.feedback-entry .meta{color:#6b5200;margin-top:6px}
+.feedback-label{display:inline-flex;align-items:center;gap:6px}
+.feedback-label::before{content:"●";color:#d6a800;font-size:14px}
+.outcome-summary-entry{background:#eaf5e8;border:2px solid #5b8f4a;border-radius:10px;padding:12px}
+.outcome-summary-entry label{color:#315c25;font-size:13px}
+.outcome-summary-entry textarea{background:#fbfff9;border-color:#78a86a;min-height:90px}
+.outcome-summary-entry .meta{color:#315c25;margin-top:6px}
+.agenda-outcome{margin-top:7px;padding:8px 10px;border-left:4px solid #5b8f4a;background:#f3faef;border-radius:0 7px 7px 0}
+.agenda-outcome.pending{border-left-color:#d6a800;background:#fffaf0}
+.agenda-outcome div+div{margin-top:5px}
+.history-count{font-size:11px;color:var(--muted)}
+.hidden{display:none!important}
+@media(max-width:1100px){.metrics-grid{grid-template-columns:1fr 1fr}.metric-group:nth-child(2){border-right:0}.metric-group:nth-child(-n+2){border-bottom:1px solid var(--line)}.project-summary{grid-template-columns:repeat(3,1fr)}.project-stat:nth-child(3){border-right:0}}
+@media(max-width:900px){.top{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr 1fr}.discussion-heading{align-items:flex-start;flex-direction:column}.discussion-heading-right{max-width:none;width:100%;align-items:flex-start;flex-direction:column}.discussion-status-summary{width:100%;min-width:0}}
+@media(max-width:620px){header{align-items:flex-start;flex-direction:column}.top,.filters,.grid,.meeting,.metrics-grid,.project-summary{grid-template-columns:1fr}.metric-group{border-right:0;border-bottom:1px solid var(--line)}.project-stat{border-right:0;border-bottom:1px solid var(--line)}.projects-heading{align-items:flex-start;flex-direction:column}.discussion-status-summary{grid-template-columns:1fr}.status-manager-row,.status-add-grid{grid-template-columns:1fr}.discussion-status-cell{border-right:0;border-bottom:1px solid var(--line)}.discussion-status-cell:last-child{border-bottom:0}.comment-entry{grid-template-columns:1fr;gap:4px}.history-entry-actions{justify-content:flex-start}main{padding:12px}}
+@media print{header,.top,.meeting,.filters,.discussion-panel,.history-view{display:none!important}.agenda{display:block!important}.agenda .panel{border:0;box-shadow:none}main{padding:0}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="appTitleDisplay">CEO Conversation Tracker</h1>
+    <p>Track discussion topics, decisions, actions, history and future follow-up.</p>
+  </div>
+  <div>
+    <button onclick="changeAppTitle()">Change Title</button>
+    <button onclick="showAgenda()">Agenda</button>
+    <button onclick="showHistory()">History</button>
+    <button onclick="archiveMeeting()">Archive Meeting</button>
+    <button onclick="createBackup()">Create Backup</button>
+    <label class="file-btn">Restore Backup<input id="importFile" type="file" accept=".json,application/json" hidden></label>
+    <button class="primary" onclick="openForm()">+ Add Item</button>
+  </div>
+</header>
+
+<main>
+<section id="boardView">
+  <div class="top">
+    <div class="stat"><small>DISCUSS TODAY</small><strong id="sDiscuss">0</strong></div>
+    <div class="stat"><small>OPEN DECISIONS</small><strong id="sDecisions">0</strong></div>
+    <div class="stat"><small>OPEN ACTIONS</small><strong id="sActions">0</strong></div>
+    <div class="stat"><small>OVERDUE</small><strong id="sOverdue">0</strong></div>
+  </div>
+
+  <div class="panel meeting">
+    <div>
+      <label>Meeting Date</label>
+      <input id="meetingDate" type="date">
+    </div>
+    <div>
+      <label>Weekly Headline</label>
+      <input id="headline" placeholder="Operations are stable; project decisions are the focus.">
+    </div>
+  </div>
+
+  <section class="panel metrics-panel">
+    <div class="metrics-heading">
+      <div>
+        <h2 id="metricsDashboardTitle">Weekly IT Metrics Dashboard</h2>
+        <small id="metricsDashboardSubtitle">Type directly into the current-value and target fields. Status and trend update automatically.</small>
+      </div>
+      <div class="metrics-heading-actions">
+        <button type="button" onclick="openDashboardTitleEditor()">Edit Dashboard Titles</button>
+        <button type="button" onclick="openMetricEditor()">+ Add Metric</button>
+        <button type="button" onclick="resetMetrics()">Reset Metrics</button>
+      </div>
+    </div>
+    <div id="metricsGrid" class="metrics-grid"></div>
+    <div class="metric-history-note">
+      Monthly trends use the latest saved or archived KPI value from each month. Archive each monthly meeting to preserve the official history.
+    </div>
+  </section>
+  <section class="panel projects-panel">
+    <div class="projects-heading">
+      <div>
+        <h2>Project Portfolio</h2>
+        <small>A high-level view of project health and progress for executive discussion.</small>
+      </div>
+      <button type="button" onclick="openProjectEditor()">+ Add Project</button>
+    </div>
+
+    <div class="project-summary">
+      <div class="project-stat"><small>Overall Status</small><strong id="projectOverall">—</strong></div>
+      <div class="project-stat"><small>Total Projects</small><strong id="projectTotal">0</strong></div>
+      <div class="project-stat"><small>Green</small><strong id="projectGreen" class="portfolio-green">0</strong></div>
+      <div class="project-stat"><small>Yellow</small><strong id="projectYellow" class="portfolio-yellow">0</strong></div>
+      <div class="project-stat"><small>Red</small><strong id="projectRed" class="portfolio-red">0</strong></div>
+      <div class="project-stat"><small>Average Complete</small><strong id="projectAverage">0%</strong></div>
+    </div>
+
+    <div class="project-table-wrap">
+      <table class="project-table">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Status</th>
+            <th>% Complete</th>
+            <th>Owner</th>
+            <th>Executive Note</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="projectTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+
+  <div class="filters">
+    <input id="search" placeholder="Search items and history...">
+    <select id="filterStatus">
+      <option value="">All statuses</option>
+    </select>
+    <select id="filterType">
+      <option value="">All types</option><option>Topic</option><option>Decision</option><option>Action</option><option>Risk</option>
+    </select>
+    <select id="filterCategory">
+      <option value="">All categories</option><option>Operations</option><option>Projects</option><option>Governance</option><option>People</option><option>Strategy</option><option>Other</option>
+    </select>
+    <select id="filterPriority">
+      <option value="">All priorities</option><option>High</option><option>Medium</option><option>Low</option>
+    </select>
+  </div>
+
+  <section class="panel discussion-panel">
+    <div class="discussion-heading">
+      <div>
+        <h2>CEO Discussion Tracker</h2>
+        <small>Review items in a compact row view. Change status directly or open an item for full details.</small>
+      </div>
+      <div class="discussion-heading-right">
+        <button type="button" onclick="openStatusManager()">Manage Statuses</button>
+        <div id="discussionStatusSummary" class="discussion-status-summary"></div>
+      </div>
+    </div>
+
+    <div class="discussion-table-wrap">
+      <table class="discussion-table">
+        <thead>
+          <tr>
+            <th data-sort-header="title">
+              <button type="button" class="discussion-sort-button" onclick="setDiscussionSort('title')">
+                Topic <span class="discussion-sort-icon">↕</span>
+              </button>
+            </th>
+            <th data-sort-header="status">
+              <button type="button" class="discussion-sort-button" onclick="setDiscussionSort('status')">
+                Status <span class="discussion-sort-icon">↕</span>
+              </button>
+            </th>
+            <th data-sort-header="type">
+              <button type="button" class="discussion-sort-button" onclick="setDiscussionSort('type')">
+                Type <span class="discussion-sort-icon">↕</span>
+              </button>
+            </th>
+            <th data-sort-header="priority">
+              <button type="button" class="discussion-sort-button" onclick="setDiscussionSort('priority')">
+                Priority <span class="discussion-sort-icon">↕</span>
+              </button>
+            </th>
+            <th data-sort-header="owner">
+              <button type="button" class="discussion-sort-button" onclick="setDiscussionSort('owner')">
+                Owner <span class="discussion-sort-icon">↕</span>
+              </button>
+            </th>
+            <th data-sort-header="due">
+              <button type="button" class="discussion-sort-button" onclick="setDiscussionSort('due')">
+                Due Date <span class="discussion-sort-icon">↕</span>
+              </button>
+            </th>
+            <th data-sort-header="outcome">
+              <button type="button" class="discussion-sort-button" onclick="setDiscussionSort('outcome')">
+                Outcome / Feedback <span class="discussion-sort-icon">↕</span>
+              </button>
+            </th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="discussionTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+<section id="agendaView" class="agenda">
+  <div class="panel">
+    <button class="primary" onclick="showBoard()">← Back to Dashboard</button>
+    <button onclick="emailAgenda()">Email Agenda</button>
+    <button onclick="window.print()">Print Agenda</button>
+    <h2 id="agendaTitle"></h2>
+    <p id="agendaHeadline"></p>
+    <div id="agendaBody"></div>
+  </div>
+</section>
+
+<section id="historyView" class="history-view">
+  <div class="panel">
+    <div class="history-toolbar">
+      <div>
+        <h2 style="margin:0">Meeting History</h2>
+        <p style="margin:4px 0 0;color:#667085">Archived meetings, discussion items, decisions, and outstanding follow-up.</p>
+      </div>
+      <div class="history-actions">
+        <button id="removeDuplicatesBtn" onclick="removeDuplicateArchives()">Remove Duplicate Archives</button>
+        <button class="danger" onclick="clearAllHistory()">Clear All History</button>
+        <button class="primary" onclick="showBoard()">← Back to Dashboard</button>
+      </div>
+    </div>
+    <div id="duplicateSummary" class="archive-meta"></div>
+    <div id="archiveList" class="archive-list"></div>
+  </div>
+</section>
+</main>
+
+<div id="modal" class="modal-bg">
+<form id="form" class="modal">
+  <h2 id="formTitle">Add Item</h2>
+  <input id="id" type="hidden">
+  <div class="grid">
+    <div class="full"><label>Title</label><input id="title" required></div>
+    <div><label>Type</label><select id="type"><option>Topic</option><option>Decision</option><option>Action</option><option>Risk</option></select></div>
+    <div><label>Category</label><select id="category"><option>Operations</option><option>Projects</option><option>Governance</option><option>People</option><option>Strategy</option><option>Other</option></select></div>
+    <div><label>Priority</label><select id="priority"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+    <div><label>Status</label><select id="status"></select></div>
+    <div><label>Owner</label><input id="owner"></div>
+    <div><label>Due Date</label><input id="due" type="date"></div>
+    <div class="full"><label>Decision / Outcome Needed</label><input id="outcome"></div>
+    <div class="full"><label>Notes / Talking Points</label><textarea id="notes"></textarea></div>
+    <div class="full feedback-entry">
+      <label class="feedback-label">Person's Feedback / Direction</label>
+      <textarea id="followup" placeholder="Enter the person's feedback, direction, decision, concern, or follow-up here. The current date and time will be added automatically when you save."></textarea>
+      <div class="meta">This entry will be automatically date- and time-stamped and added to the comment history.</div>
+    </div>
+    <div class="full outcome-summary-entry">
+      <label>Meeting Outcome Summary</label>
+      <textarea id="feedbackSummary" placeholder="Summarize the final direction, decision, or outcome in one or two sentences. This summary will appear beside the original outcome needed in the agenda and meeting archive."></textarea>
+      <div class="meta">Leave this blank to use the latest person's feedback automatically.</div>
+    </div>
+    <div class="full">
+      <label>Comment &amp; Activity History</label>
+      <div id="inlineItemHistory" class="inline-history"></div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button type="button" id="deleteBtn" class="danger hidden" onclick="deleteItem()">Delete</button>
+    <button type="button" onclick="closeForm()">Cancel</button>
+    <button class="primary">Save</button>
+  </div>
+</form>
+</div>
+
+<div id="projectModal" class="modal-bg">
+  <form id="projectForm" class="modal">
+    <h2 id="projectFormTitle">Add Project</h2>
+    <input id="projectId" type="hidden">
+    <div class="grid">
+      <div class="full">
+        <label>Project Name</label>
+        <input id="projectName" required placeholder="Example: Production Data Centre Evergreen">
+      </div>
+      <div>
+        <label>Status</label>
+        <select id="projectStatus">
+          <option value="Green">Green</option>
+          <option value="Yellow">Yellow</option>
+          <option value="Red">Red</option>
+        </select>
+      </div>
+      <div>
+        <label>Percent Complete</label>
+        <input id="projectPercent" type="number" min="0" max="100" step="1" required>
+      </div>
+      <div class="full">
+        <label>Owner</label>
+        <input id="projectOwner" placeholder="Project owner or accountable leader">
+      </div>
+      <div class="full">
+        <label>Executive Note</label>
+        <textarea id="projectNote" placeholder="One short sentence: key progress, concern, decision, or next milestone."></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" id="deleteProjectBtn" class="danger hidden" onclick="deleteProjectFromEditor()">Remove Project</button>
+      <button type="button" onclick="closeProjectEditor()">Cancel</button>
+      <button class="primary">Save Project</button>
+    </div>
+  </form>
+</div>
+
+<div id="metricModal" class="modal-bg">
+  <form id="metricForm" class="modal">
+    <h2 id="metricFormTitle">Add Metric</h2>
+    <input id="metricId" type="hidden">
+    <div class="grid">
+      <div>
+        <label>Dashboard Section</label>
+        <select id="metricGroup">
+          <option value="RUN">Run the Business</option>
+          <option value="PROTECT">Protect the Business</option>
+          <option value="PEOPLE">People & Capacity</option>
+          <option value="CONTROL">Control the Environment</option>
+        </select>
+      </div>
+      <div>
+        <label>Metric Name</label>
+        <input id="metricName" required placeholder="Example: Open Ticket Backlog">
+      </div>
+      <div>
+        <label>Current Value</label>
+        <input id="metricCurrentValue" type="number" step="0.1" required>
+      </div>
+      <div>
+        <label>Target</label>
+        <input id="metricTargetValue" type="number" step="0.1" required>
+      </div>
+      <div>
+        <label>Unit / Suffix</label>
+        <input id="metricUnit" placeholder="%, hrs, $, days...">
+      </div>
+      <div>
+        <label>Target Direction</label>
+        <select id="metricDirection">
+          <option value="higher">Higher is better</option>
+          <option value="lower">Lower is better</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" id="deleteMetricBtn" class="danger hidden" onclick="deleteMetricFromEditor()">Remove Metric</button>
+      <button type="button" onclick="closeMetricEditor()">Cancel</button>
+      <button class="primary">Save Metric</button>
+    </div>
+  </form>
+</div>
+
+<div id="dashboardTitleModal" class="modal-bg">
+  <form id="dashboardTitleForm" class="modal">
+    <h2>Edit Metrics Dashboard Titles</h2>
+    <div class="grid">
+      <div class="full">
+        <label>Dashboard Title</label>
+        <input id="dashboardTitleInput" required>
+      </div>
+      <div class="full">
+        <label>Dashboard Subtitle</label>
+        <input id="dashboardSubtitleInput">
+      </div>
+      <div>
+        <label>Section 1 Title</label>
+        <input id="groupTitleRun" required>
+      </div>
+      <div>
+        <label>Section 2 Title</label>
+        <input id="groupTitleProtect" required>
+      </div>
+      <div>
+        <label>Section 3 Title</label>
+        <input id="groupTitlePeople" required>
+      </div>
+      <div>
+        <label>Section 4 Title</label>
+        <input id="groupTitleControl" required>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" onclick="resetDashboardTitles()">Reset Titles</button>
+      <button type="button" onclick="closeDashboardTitleEditor()">Cancel</button>
+      <button class="primary">Save Titles</button>
+    </div>
+  </form>
+</div>
+
+
+<div id="metricTrendModal" class="modal-bg">
+  <div class="modal metric-trend-modal">
+    <h2 id="metricTrendTitle">Metric Trend</h2>
+    <div id="metricTrendSummary" class="archive-meta"></div>
+    <div id="metricTrendChart" class="metric-trend-chart-large"></div>
+    <div class="metric-trend-table-wrap">
+      <table class="metric-trend-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Value</th>
+            <th>Target</th>
+            <th>Status</th>
+            <th>Source Date</th>
+          </tr>
+        </thead>
+        <tbody id="metricTrendTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <button type="button" onclick="closeMetricTrend()">Close</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="statusManagerModal" class="modal-bg">
+  <div class="modal status-manager-modal">
+    <h2>Manage Discussion Statuses</h2>
+    <p class="status-manager-help">
+      Add statuses for your workflow, choose their colour, and identify statuses that should count as completed.
+      The three core statuses can be renamed and recoloured but cannot be removed.
+    </p>
+
+    <div id="statusManagerList" class="status-manager-list"></div>
+
+    <div class="status-add-panel">
+      <h3>Add a Status</h3>
+      <div class="status-add-grid">
+        <div>
+          <label>Status Name</label>
+          <input id="newStatusName" placeholder="Example: Assigned, On Hold, CEO Review">
+        </div>
+        <div>
+          <label>Colour</label>
+          <select id="newStatusColor"></select>
+        </div>
+        <label class="status-closed-toggle">
+          <input id="newStatusClosed" type="checkbox">
+          Treat as completed / closed
+        </label>
+        <button type="button" class="primary" onclick="addStatusDefinition()">+ Add Status</button>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <button type="button" onclick="closeStatusManager()">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="itemDetailModal" class="modal-bg">
+  <div class="modal">
+    <h2 id="itemDetailTitle">Item Details</h2>
+    <div id="itemDetailBody"></div>
+    <div id="itemDetailActions" class="modal-foot"></div>
+  </div>
+</div>
+
+<div id="historyModal" class="modal-bg">
+  <div class="modal">
+    <h2 id="historyTitle">Comments &amp; Activity History</h2>
+    <div id="historyTimeline" class="timeline"></div>
+    <div class="modal-foot"><button type="button" onclick="closeItemHistory()">Close</button></div>
+  </div>
+</div>
+
+<script>
+const KEY="ceoTracker.items.v2";
+const MEET="ceoTracker.meeting.v2";
+const ARCHIVE="ceoTracker.meetingHistory.v2";
+const METRICS="ceoTracker.metrics.v1";
+const PREPS="ceoTracker.meetingPreps.v1";
+const APP_TITLE="ceoTracker.appTitle.v1";
+const METRIC_CONFIG="ceoTracker.metricConfig.v1";
+const PROJECTS="ceoTracker.projects.v1";
+const STATUS_DEFINITIONS="ceoTracker.statusDefinitions.v1";
+const DISCUSSION_SORT="ceoTracker.discussionSort.v1";
+const CEO_TOPICS_SEED="ceoTracker.ceoTopics.20260717.v1";
+const KPI_CHART_SEED="ceoTracker.kpiChart.20260723.v1";
+const now=new Date().toISOString();
+
+const defaultStatusDefinitions=[
+  {id:"Discuss",name:"Discuss",color:"amber",closed:false,system:true},
+  {id:"Waiting",name:"Waiting / Follow-up",color:"blue",closed:false,system:true},
+  {id:"Closed",name:"Closed",color:"green",closed:true,system:true}
+];
+
+const statusColorPalette={
+  amber:{label:"Amber",background:"#fff8e1",border:"#e3bd45",text:"#765500"},
+  blue:{label:"Blue",background:"#eef5ff",border:"#9abbe0",text:"#244b78"},
+  green:{label:"Green",background:"#eef8ee",border:"#9fc3a3",text:"#285b2f"},
+  red:{label:"Red",background:"#fff0ef",border:"#e6a09a",text:"#9d2319"},
+  purple:{label:"Purple",background:"#f5effb",border:"#bca2d6",text:"#5c3b78"},
+  teal:{label:"Teal",background:"#e9f8f7",border:"#83c7c3",text:"#17615d"},
+  gray:{label:"Gray",background:"#f2f4f7",border:"#cbd2da",text:"#475467"}
+};
+
+const defaultMetrics=[
+  {id:"run_resolution_current",group:"RUN",name:"% Resolution Current Month",value:46.5,target:90,unit:"%",direction:"higher",prior:87.7},
+  {id:"run_resolution_previous",group:"RUN",name:"% Resolution Previous Month",value:87.7,target:90,unit:"%",direction:"higher",prior:82},
+  {id:"run_backlog_current",group:"RUN",name:"Open Ticket Backlog Current Month",value:835,target:100,unit:"",direction:"lower",prior:738},
+  {id:"run_backlog_previous",group:"RUN",name:"Open Ticket Backlog Previous Month",value:738,target:100,unit:"",direction:"lower",prior:690},
+  {id:"run_backlog_days",group:"RUN",name:"Open Ticket Backlog Average Days Open",value:158,target:30,unit:"",direction:"lower",prior:150},
+
+  {id:"protect_availability",group:"PROTECT",name:"Core System Availability",value:100,target:99.9,unit:"%",direction:"higher",prior:99.9},
+  {id:"protect_backup",group:"PROTECT",name:"Backup Success",value:99.5,target:99,unit:"%",direction:"higher",prior:99.3},
+  {id:"protect_critical_l5",group:"PROTECT",name:"Systems with Critical Vulnerabilities LVL 5",value:23,target:0,unit:"",direction:"lower",prior:20},
+  {id:"protect_high_l4",group:"PROTECT",name:"Systems with High Vulnerabilities LVL 4",value:18,target:0,unit:"",direction:"lower",prior:15},
+  {id:"protect_cyber_risk",group:"PROTECT",name:"Global Cyber Risk Score",value:747,target:499,unit:"",direction:"lower",prior:720},
+
+  {id:"people_reviews",group:"PEOPLE",name:"Employee Performance Reviews Completed",value:0,target:19,unit:"",direction:"higher",prior:0},
+  {id:"people_oneonones",group:"PEOPLE",name:"Team One-on-Ones Completed",value:10,target:19,unit:"",direction:"higher",prior:12},
+  {id:"people_project_meetings",group:"PEOPLE",name:"Project Meeting Load",value:24,target:26,unit:"%",direction:"lower",prior:22},
+  {id:"people_team_meetings",group:"PEOPLE",name:"Team Meetings Load",value:9,target:12,unit:"%",direction:"lower",prior:8},
+  {id:"people_other_meetings",group:"PEOPLE",name:"Other Meetings Load",value:16,target:16,unit:"%",direction:"lower",prior:15},
+  {id:"people_focus_time",group:"PEOPLE",name:"Focus Time Meeting Load",value:14,target:20,unit:"%",direction:"higher",prior:12},
+
+  {id:"strategy_project_completion",group:"CONTROL",name:"Strategic Project Completion",value:0,target:3,unit:"",direction:"higher",prior:0}
+];
+
+const defaultMetricConfig={
+  dashboardTitle:"Monthly IT Metrics Dashboard",
+  dashboardSubtitle:"Type directly into the current-value and target fields. Status and trend update automatically.",
+  groups:{
+    RUN:"Run the Business",
+    PROTECT:"Protect the Business",
+    PEOPLE:"People & Capacity",
+    CONTROL:"Strategy & Innovation"
+  }
+};
+
+const defaultProjects=[
+  {
+    id:"project_bti",
+    name:"Business Transformation – Phase 0",
+    status:"Yellow",
+    percent:90,
+    owner:"Manny / Project Team",
+    note:"Phase 0 plan is nearing completion; governance and remaining validation require focus."
+  },
+  {
+    id:"project_datacentre",
+    name:"Production Data Centre Evergreen",
+    status:"Yellow",
+    percent:45,
+    owner:"Infrastructure Team",
+    note:"Core equipment is installed; remaining hardware, cabling and detailed implementation planning are pending."
+  },
+  {
+    id:"project_drmove",
+    name:"Production Equipment Move to DR Site",
+    status:"Green",
+    percent:20,
+    owner:"Infrastructure Team",
+    note:"Planning is underway and dependencies are being confirmed."
+  }
+];
+
+const ceoTopicSeed=[
+  {
+    id:"ceo_topic_01_it_update",
+    aliases:[],
+    title:"1. IT Department Update",
+    type:"Topic",category:"Operations",priority:"Medium",status:"Waiting",
+    owner:"",due:"",
+    outcome:"Is the CEO satisfied with the direction of IT? Are there any concerns or additional expectations?",
+    notes:"• Team morale has improved.\n• IT operations are stable.\n• Continue strengthening the team and reducing technical debt.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:12:00",
+    updatedAt:"2026-07-17T12:12:00",
+    history:[
+      {date:"2026-07-17T12:12:00",text:"Item created from the CEO discussion list.",kind:"activity"},
+      {date:"2026-07-17T16:01:00",text:"Pause developer role.\n\n1) Leadership training for Mallorie/Gabe\n2) Peter/Chad – cross-training: create a cross-training plan to announce to the team.",kind:"comment"}
+    ]
+  },
+  {
+    id:"ceo_topic_02_bti_stabilization",
+    aliases:[],
+    title:"2. BTI – Stabilization",
+    type:"Topic",category:"Projects",priority:"High",status:"Waiting",
+    owner:"",due:"",
+    outcome:"Are priorities still correct? Should additional support or changes be made?",
+    notes:"• Stabilization is behind schedule.\n• Good work has been completed identifying issues.\n• The current state is becoming clearer, but significant work remains.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:11:00",
+    updatedAt:"2026-07-17T12:11:00",
+    history:[
+      {date:"2026-07-17T12:11:00",text:"Item created from the CEO discussion list.",kind:"activity"},
+      {date:"2026-07-17T16:02:00",text:"Priorities are still correct. Additional support is TBD; determine in a couple of weeks. Potential support: Shauna and Marie.",kind:"comment"}
+    ]
+  },
+  {
+    id:"ceo_topic_03_overall_plan",
+    aliases:["Prepare high-level BTI milestone dates"],
+    title:"3. BTI – Overall Project Plan",
+    type:"Decision",category:"Projects",priority:"High",status:"Discuss",
+    owner:"",due:"",
+    outcome:"Approve high-level management milestone dates and regular progress reviews.",
+    notes:"• A project plan exists but lacks disciplined management.\n• Milestones continue to slide.\n• Executive-level target dates are needed.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:10:00",
+    updatedAt:"2026-07-17T12:10:00",
+    history:[
+      {date:"2026-07-17T12:10:00",text:"Item created from the CEO discussion list.",kind:"activity"}
+    ]
+  },
+  {
+    id:"ceo_topic_04_routing_heatmap",
+    aliases:[],
+    title:"4. BTI – Routing Heat Map",
+    type:"Decision",category:"Projects",priority:"High",status:"Discuss",
+    owner:"",due:"",
+    outcome:"Confirm expectations and next steps required to complete this workstream.",
+    notes:"• Significant effort has been completed.\n• The structure is still not mature enough to manage the work effectively.\n• Better organization and ownership are needed.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:09:00",
+    updatedAt:"2026-07-17T12:09:00",
+    history:[
+      {date:"2026-07-17T12:09:00",text:"Item created from the CEO discussion list.",kind:"activity"}
+    ]
+  },
+  {
+    id:"ceo_topic_05_pm_governance",
+    aliases:[],
+    title:"5. Project Management Governance",
+    type:"Decision",category:"Governance",priority:"High",status:"Discuss",
+    owner:"",due:"",
+    outcome:"Is the current PM model long-term? If yes, what improvements are expected? If not, what would trigger a change?",
+    notes:"• The concern is project execution—not individuals.\n• Stronger planning, coordination, accountability, and follow-through are needed.\n• Project discipline needs improvement.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:08:00",
+    updatedAt:"2026-07-17T12:08:00",
+    history:[
+      {date:"2026-07-17T12:08:00",text:"Item created from the CEO discussion list.",kind:"activity"}
+    ]
+  },
+  {
+    id:"ceo_topic_06_pm_role",
+    aliases:["Confirm the long-term BTI project-management model"],
+    title:"6. PM Role Clarification",
+    type:"Decision",category:"Governance",priority:"High",status:"Waiting",
+    owner:"",due:"",
+    outcome:"Reconfirm the governance model and determine how to strengthen project management without changing roles.",
+    notes:"• The executive team intentionally chose an independent third-party PM.\n• The decision reflected my existing IT leadership role and long-standing relationships within Decor, including Stan.\n• I remain committed as Project Owner, Executive Sponsor, and Technical Leader.\n• I do not want to become the Project Manager.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:07:00",
+    updatedAt:"2026-07-17T12:07:00",
+    history:[
+      {date:"2026-07-17T12:07:00",text:"Item created from the CEO discussion list.",kind:"activity"},
+      {date:"2026-07-17T16:06:00",text:"Stay the course. Add Marie to provide more support. Establish a weekly CEO meeting with John.",kind:"comment"}
+    ]
+  },
+  {
+    id:"ceo_topic_07_exec_reporting",
+    aliases:[],
+    title:"7. Executive Reporting",
+    type:"Decision",category:"Governance",priority:"Medium",status:"Waiting",
+    owner:"",due:"",
+    outcome:"Should risks be presented directly to Steering/SLT or discussed with the CEO first?",
+    notes:"• Executive reporting should include both successes and risks.\n• Honest reporting enables better decisions.\n• The intent is transparency, not negativity.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:06:00",
+    updatedAt:"2026-07-17T12:06:00",
+    history:[
+      {date:"2026-07-17T12:06:00",text:"Item created from the CEO discussion list.",kind:"activity"},
+      {date:"2026-07-17T16:07:00",text:"Provide light BTI project updates for SLT versus the Executive Steering Committee.",kind:"comment"}
+    ]
+  },
+  {
+    id:"ceo_topic_08_slt_steering",
+    aliases:[],
+    title:"8. SLT vs Steering Committee",
+    type:"Decision",category:"Governance",priority:"Medium",status:"Discuss",
+    owner:"",due:"",
+    outcome:"Define the purpose of SLT versus the Executive Steering Committee.",
+    notes:"• Clarify the purpose of weekly SLT BTI updates.\n• Avoid duplicate governance.\n• If SLT becomes an official BTI meeting, use a structured project update.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:05:00",
+    updatedAt:"2026-07-17T12:05:00",
+    history:[
+      {date:"2026-07-17T12:05:00",text:"Item created from the CEO discussion list.",kind:"activity"}
+    ]
+  },
+  {
+    id:"ceo_topic_09_sam",
+    aliases:["Clarify Sam's role and management accountability"],
+    title:"9. Sam / Product Development",
+    type:"Decision",category:"People",priority:"High",status:"Waiting",
+    owner:"",due:"",
+    outcome:"Should I manage Sam's priorities directly, coordinate only, or review priorities with the CEO?",
+    notes:"• Clarify Sam's primary role.\n• Confirm whether Sam is a BTI resource or Product Development resource.\n• Shared SMEs may create conflicts.\n• Management expectations need clarity.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:04:00",
+    updatedAt:"2026-07-17T12:04:00",
+    history:[
+      {date:"2026-07-17T12:04:00",text:"Item created from the CEO discussion list.",kind:"activity"},
+      {date:"2026-07-17T16:09:00",text:"Move Sam to Zach.",kind:"comment"}
+    ]
+  },
+  {
+    id:"ceo_topic_10_prioritization",
+    aliases:[],
+    title:"10. Strategic Prioritization",
+    type:"Decision",category:"Strategy",priority:"High",status:"Discuss",
+    owner:"",due:"",
+    outcome:"What initiatives receive protected capacity? What should be deferred?",
+    notes:"• Too many initiatives are running simultaneously.\n• There is a risk of completing 20% of many projects instead of finishing key priorities.\n• Stronger organizational focus is needed.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:03:00",
+    updatedAt:"2026-07-17T12:03:00",
+    history:[
+      {date:"2026-07-17T12:03:00",text:"Item created from the CEO discussion list.",kind:"activity"}
+    ]
+  },
+  {
+    id:"ceo_topic_11_capacity",
+    aliases:[],
+    title:"11. Capacity & Workload",
+    type:"Decision",category:"People",priority:"High",status:"Discuss",
+    owner:"",due:"",
+    outcome:"What work should I stop doing? How should I balance IT leadership, BTI, and people leadership?",
+    notes:"• BTI responsibilities continue to grow.\n• Project coordination and requirements work consume significant time.\n• There is a risk of sacrificing one-on-ones and team morale.\n• Too many company-wide meetings reduce execution time.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:02:00",
+    updatedAt:"2026-07-17T12:02:00",
+    history:[
+      {date:"2026-07-17T12:02:00",text:"Item created from the CEO discussion list.",kind:"activity"}
+    ]
+  },
+  {
+    id:"ceo_topic_12_expectations",
+    aliases:[],
+    title:"12. CEO Expectations",
+    type:"Topic",category:"Strategy",priority:"High",status:"Discuss",
+    owner:"",due:"",
+    outcome:"What are the CEO's top priorities for me? What does success look like by year-end?",
+    notes:"• Confirm priorities for the next 90 days.\n• Discuss year-end success.\n• Identify concerns and support needed.",
+    meetingDate:"2026-07-17",
+    createdAt:"2026-07-17T12:01:00",
+    updatedAt:"2026-07-17T12:01:00",
+    history:[
+      {date:"2026-07-17T12:01:00",text:"Item created from the CEO discussion list.",kind:"activity"}
+    ]
+  }
+];
+
+function ensureHistoryEntries(history){
+  return (Array.isArray(history)?history:[]).map(entry=>({
+    ...entry,
+    id:entry.id||crypto.randomUUID(),
+    kind:entry.kind==="comment"?"comment":"activity"
+  }));
+}
+
+function cloneSeedTopic(seed){
+  const {aliases,...topic}=seed;
+  return {
+    ...topic,
+    history:ensureHistoryEntries(topic.history||[])
+  };
+}
+
+const sample=ceoTopicSeed.map(cloneSeedTopic);
+
+const $=id=>document.getElementById(id);
+const legacyMeeting=JSON.parse(localStorage.getItem(MEET)||"null")||{
+  date:new Date().toISOString().slice(0,10),
+  headline:"Operations are stable; project decisions are the focus."
+};
+let activeMeetingDate=legacyMeeting.date||new Date().toISOString().slice(0,10);
+
+let items=(JSON.parse(localStorage.getItem(KEY)||"null")||sample)
+  .map(x=>({
+    ...x,
+    history:ensureHistoryEntries(x.history),
+    meetingDate:x.meetingDate||"",
+    feedbackSummary:String(x.feedbackSummary||""),
+    createdAt:x.createdAt||now,
+    updatedAt:x.updatedAt||x.createdAt||now
+  }));
+
+if(!localStorage.getItem(CEO_TOPICS_SEED)){
+  ceoTopicSeed.forEach(seed=>{
+    const matchingIndex=items.findIndex(item=>
+      item.id===seed.id ||
+      item.title===seed.title ||
+      (seed.aliases||[]).includes(item.title)
+    );
+
+    if(matchingIndex>=0){
+      const existing=items[matchingIndex];
+      const combinedHistory=[...(existing.history||[])];
+
+      (seed.history||[]).forEach(seedEntry=>{
+        const alreadyExists=combinedHistory.some(entry=>
+          String(entry.text||"").trim()===String(seedEntry.text||"").trim()
+        );
+        if(!alreadyExists) combinedHistory.push({...seedEntry});
+      });
+
+      const {aliases,...seedFields}=seed;
+      items[matchingIndex]={
+        ...existing,
+        ...seedFields,
+        id:existing.id,
+        history:ensureHistoryEntries(combinedHistory)
+      };
+    }else{
+      items.push(cloneSeedTopic(seed));
+    }
+  });
+
+  localStorage.setItem(KEY,JSON.stringify(items));
+  localStorage.setItem(CEO_TOPICS_SEED,"loaded");
+}
+
+let meetingHistory=JSON.parse(localStorage.getItem(ARCHIVE)||"[]");
+let meetingPreps=JSON.parse(localStorage.getItem(PREPS)||"{}");
+let metrics=hydrateMetrics(JSON.parse(localStorage.getItem(METRICS)||"null")||defaultMetrics);
+let metricConfig=hydrateMetricConfig(JSON.parse(localStorage.getItem(METRIC_CONFIG)||"null"));
+let projects=hydrateProjects(JSON.parse(localStorage.getItem(PROJECTS)||"null")||defaultProjects);
+let appTitle=localStorage.getItem(APP_TITLE)||"CEO Conversation Tracker";
+let statusDefinitions=hydrateStatusDefinitions(
+  JSON.parse(localStorage.getItem(STATUS_DEFINITIONS)||"null")||defaultStatusDefinitions
+);
+let discussionSort=hydrateDiscussionSort(
+  JSON.parse(localStorage.getItem(DISCUSSION_SORT)||"null")
+);
+ensureStatusDefinitionsForItems();
+
+if(!localStorage.getItem(KPI_CHART_SEED)){
+  metrics=hydrateMetrics(defaultMetrics);
+  metricConfig=hydrateMetricConfig(defaultMetricConfig);
+  localStorage.setItem(METRICS,JSON.stringify(metrics));
+  localStorage.setItem(METRIC_CONFIG,JSON.stringify(metricConfig));
+  localStorage.setItem(KPI_CHART_SEED,"loaded");
+}
+
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(items));
+  localStorage.setItem(ARCHIVE,JSON.stringify(meetingHistory));
+  localStorage.setItem(METRICS,JSON.stringify(metrics));
+  localStorage.setItem(PREPS,JSON.stringify(meetingPreps));
+  localStorage.setItem(APP_TITLE,appTitle);
+  localStorage.setItem(METRIC_CONFIG,JSON.stringify(metricConfig));
+  localStorage.setItem(PROJECTS,JSON.stringify(projects));
+  localStorage.setItem(STATUS_DEFINITIONS,JSON.stringify(statusDefinitions));
+  localStorage.setItem(DISCUSSION_SORT,JSON.stringify(discussionSort));
+}
+
+function hydrateStatusDefinitions(snapshot){
+  const source=Array.isArray(snapshot)&&snapshot.length
+    ?snapshot
+    :defaultStatusDefinitions;
+  const validColors=Object.keys(statusColorPalette);
+  const seen=new Set();
+
+  const definitions=source.map((definition,index)=>{
+    const id=String(definition.id||`status_${index}_${Date.now()}`);
+    const system=["Discuss","Waiting","Closed"].includes(id);
+    return {
+      id,
+      name:String(definition.name||id).trim()||id,
+      color:validColors.includes(definition.color)?definition.color:"gray",
+      closed:system?id==="Closed":Boolean(definition.closed),
+      system
+    };
+  }).filter(definition=>{
+    if(seen.has(definition.id)) return false;
+    seen.add(definition.id);
+    return true;
+  });
+
+  defaultStatusDefinitions.forEach(defaultDefinition=>{
+    if(!definitions.some(definition=>definition.id===defaultDefinition.id)){
+      definitions.push({...defaultDefinition});
+    }
+  });
+
+  return definitions;
+}
+
+function ensureStatusDefinitionsForItems(){
+  const existingIds=new Set(statusDefinitions.map(definition=>definition.id));
+  items.forEach(item=>{
+    const id=String(item.status||"Discuss");
+    if(existingIds.has(id)) return;
+    statusDefinitions.push({
+      id,
+      name:id==="Waiting"?"Waiting / Follow-up":id,
+      color:"gray",
+      closed:id==="Closed",
+      system:false
+    });
+    existingIds.add(id);
+  });
+}
+
+function statusDefinition(statusId){
+  return statusDefinitions.find(definition=>definition.id===statusId)
+    ||defaultStatusDefinitions.find(definition=>definition.id===statusId)
+    ||{id:statusId,name:String(statusId||"Unknown"),color:"gray",closed:false,system:false};
+}
+
+function statusLabel(statusId){
+  return statusDefinition(statusId).name;
+}
+
+function statusInlineStyle(statusId){
+  const definition=statusDefinition(statusId);
+  const colors=statusColorPalette[definition.color]||statusColorPalette.gray;
+  return `background:${colors.background};border-color:${colors.border};color:${colors.text};`;
+}
+
+function isClosedStatus(statusId){
+  return Boolean(statusDefinition(statusId).closed);
+}
+
+function statusOptions(selectedStatus="Discuss"){
+  return statusDefinitions.map(definition=>
+    `<option value="${esc(definition.id)}" ${definition.id===selectedStatus?"selected":""}>${esc(definition.name)}</option>`
+  ).join("");
+}
+
+function statusColorOptions(selectedColor="gray"){
+  return Object.entries(statusColorPalette).map(([id,color])=>
+    `<option value="${id}" ${id===selectedColor?"selected":""}>${esc(color.label)}</option>`
+  ).join("");
+}
+
+function populateStatusControls(){
+  const filter=$("filterStatus");
+  if(filter){
+    const selected=filter.value;
+    filter.innerHTML='<option value="">All statuses</option>'+statusOptions(selected);
+    filter.value=statusDefinitions.some(definition=>definition.id===selected)?selected:"";
+  }
+
+  const formStatus=$("status");
+  if(formStatus){
+    const selected=formStatus.value||"Discuss";
+    formStatus.innerHTML=statusOptions(selected);
+    formStatus.value=statusDefinitions.some(definition=>definition.id===selected)
+      ?selected
+      :"Discuss";
+  }
+
+  const newColor=$("newStatusColor");
+  if(newColor&&!newColor.options.length){
+    newColor.innerHTML=statusColorOptions("blue");
+  }
+}
+
+function renderDiscussionStatusSummary(){
+  const container=$("discussionStatusSummary");
+  if(!container) return;
+
+  container.innerHTML=statusDefinitions.map(definition=>{
+    const count=items.filter(item=>item.status===definition.id).length;
+    return `
+      <div class="discussion-status-cell" style="${statusInlineStyle(definition.id)}">
+        <small>${esc(definition.name)}</small>
+        <strong>${count}</strong>
+      </div>`;
+  }).join("");
+}
+
+function openStatusManager(){
+  populateStatusControls();
+  renderStatusManager();
+  $("statusManagerModal").classList.add("open");
+}
+
+function closeStatusManager(){
+  $("statusManagerModal").classList.remove("open");
+}
+
+function renderStatusManager(){
+  const list=$("statusManagerList");
+  if(!list) return;
+
+  list.innerHTML=statusDefinitions.map((definition,index)=>{
+    const inUse=items.filter(item=>item.status===definition.id).length;
+    return `
+      <div class="status-manager-row">
+        <div>
+          <label>Status Name</label>
+          <input value="${esc(definition.name)}"
+            onchange="updateStatusDefinition('${definition.id}','name',this.value)">
+          ${definition.system
+            ?'<div class="status-system-note">Core status — it can be renamed but not removed.</div>'
+            :`<div class="status-system-note">${inUse} item${inUse===1?"":"s"} currently use this status.</div>`}
+        </div>
+        <div>
+          <label>Colour</label>
+          <select onchange="updateStatusDefinition('${definition.id}','color',this.value)">
+            ${statusColorOptions(definition.color)}
+          </select>
+        </div>
+        <label class="status-closed-toggle">
+          <input type="checkbox" ${definition.closed?"checked":""}
+            ${definition.system?"disabled":""}
+            onchange="updateStatusDefinition('${definition.id}','closed',this.checked)">
+          Completed / closed
+        </label>
+        <div class="status-row-actions">
+          <button type="button" onclick="moveStatusDefinition('${definition.id}',-1)"
+            ${index===0?"disabled":""}>↑</button>
+          <button type="button" onclick="moveStatusDefinition('${definition.id}',1)"
+            ${index===statusDefinitions.length-1?"disabled":""}>↓</button>
+          <button type="button" class="danger"
+            onclick="removeStatusDefinition('${definition.id}')"
+            ${definition.system?"disabled":""}>Remove</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function persistStatusDefinitions(){
+  localStorage.setItem(STATUS_DEFINITIONS,JSON.stringify(statusDefinitions));
+  populateStatusControls();
+  save();
+  render();
+  if($("statusManagerModal")?.classList.contains("open")){
+    renderStatusManager();
+  }
+}
+
+function addStatusDefinition(){
+  const input=$("newStatusName");
+  const name=input.value.trim();
+  if(!name){
+    alert("Enter a status name.");
+    input.focus();
+    return;
+  }
+
+  if(statusDefinitions.some(definition=>definition.name.toLowerCase()===name.toLowerCase())){
+    alert("A status with that name already exists.");
+    input.focus();
+    return;
+  }
+
+  statusDefinitions.push({
+    id:`status_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    name,
+    color:$("newStatusColor").value||"blue",
+    closed:$("newStatusClosed").checked,
+    system:false
+  });
+
+  input.value="";
+  $("newStatusClosed").checked=false;
+  persistStatusDefinitions();
+}
+
+function updateStatusDefinition(statusId,field,value){
+  const definition=statusDefinitions.find(item=>item.id===statusId);
+  if(!definition) return;
+
+  if(field==="name"){
+    const name=String(value||"").trim();
+    if(!name){
+      alert("A status name cannot be blank.");
+      renderStatusManager();
+      return;
+    }
+    if(statusDefinitions.some(item=>item.id!==statusId&&item.name.toLowerCase()===name.toLowerCase())){
+      alert("A status with that name already exists.");
+      renderStatusManager();
+      return;
+    }
+    definition.name=name;
+  }else if(field==="color"&&statusColorPalette[value]){
+    definition.color=value;
+  }else if(field==="closed"&&!definition.system){
+    definition.closed=Boolean(value);
+  }
+
+  persistStatusDefinitions();
+}
+
+function moveStatusDefinition(statusId,direction){
+  const index=statusDefinitions.findIndex(definition=>definition.id===statusId);
+  const target=index+Number(direction);
+  if(index<0||target<0||target>=statusDefinitions.length) return;
+
+  [statusDefinitions[index],statusDefinitions[target]]=
+    [statusDefinitions[target],statusDefinitions[index]];
+  persistStatusDefinitions();
+}
+
+function removeStatusDefinition(statusId){
+  const definition=statusDefinitions.find(item=>item.id===statusId);
+  if(!definition||definition.system) return;
+
+  const inUse=items.filter(item=>item.status===statusId).length;
+  if(inUse){
+    alert(
+      `This status is currently used by ${inUse} discussion item${inUse===1?"":"s"}.\n\n`+
+      "Move those items to another status before removing it."
+    );
+    return;
+  }
+
+  if(!confirm(`Remove the status "${definition.name}"?`)) return;
+  statusDefinitions=statusDefinitions.filter(item=>item.id!==statusId);
+  persistStatusDefinitions();
+}
+
+function hydrateDiscussionSort(snapshot){
+  const allowed=["title","status","type","priority","owner","due","outcome"];
+  const key=allowed.includes(snapshot?.key)?snapshot.key:null;
+  const direction=snapshot?.direction==="desc"?"desc":"asc";
+  return {key,direction};
+}
+
+function discussionSortValue(item,key){
+  switch(key){
+    case "title":
+      return String(item.title||"").trim().toLowerCase();
+    case "status":{
+      const index=statusDefinitions.findIndex(definition=>definition.id===item.status);
+      return index<0?Number.MAX_SAFE_INTEGER:index;
+    }
+    case "type":
+      return String(item.type||"").trim().toLowerCase();
+    case "priority":
+      return ({High:1,Medium:2,Low:3}[item.priority]||99);
+    case "owner":
+      return String(item.owner||"").trim().toLowerCase();
+    case "due":
+      return item.due?new Date(item.due+"T00:00:00").getTime():null;
+    case "outcome":
+      return `${item.outcome||""} ${resultingFeedback(item)||""}`.trim().toLowerCase();
+    default:
+      return "";
+  }
+}
+
+function compareDiscussionItems(a,b){
+  const key=discussionSort.key;
+  if(!key) return meetingItemSort(a,b);
+
+  const aValue=discussionSortValue(a,key);
+  const bValue=discussionSortValue(b,key);
+  const aBlank=aValue===null||aValue===undefined||aValue==="";
+  const bBlank=bValue===null||bValue===undefined||bValue==="";
+
+  // Keep blank owner, due-date, and outcome cells at the bottom in both directions.
+  if(aBlank&&!bBlank) return 1;
+  if(!aBlank&&bBlank) return -1;
+
+  let comparison=0;
+  if(typeof aValue==="number"&&typeof bValue==="number"){
+    comparison=aValue-bValue;
+  }else{
+    comparison=String(aValue).localeCompare(String(bValue),undefined,{
+      numeric:true,
+      sensitivity:"base"
+    });
+  }
+
+  if(comparison===0){
+    comparison=String(a.title||"").localeCompare(String(b.title||""),undefined,{
+      numeric:true,
+      sensitivity:"base"
+    });
+  }
+
+  return discussionSort.direction==="desc"?-comparison:comparison;
+}
+
+function sortedDiscussionItems(source){
+  return [...source].sort(compareDiscussionItems);
+}
+
+function setDiscussionSort(key){
+  const allowed=["title","status","type","priority","owner","due","outcome"];
+  if(!allowed.includes(key)) return;
+
+  if(discussionSort.key===key){
+    discussionSort.direction=discussionSort.direction==="asc"?"desc":"asc";
+  }else{
+    discussionSort={key,direction:"asc"};
+  }
+
+  localStorage.setItem(DISCUSSION_SORT,JSON.stringify(discussionSort));
+  render();
+}
+
+function updateDiscussionSortHeaders(){
+  document.querySelectorAll("[data-sort-header]").forEach(header=>{
+    const key=header.dataset.sortHeader;
+    const active=discussionSort.key===key;
+    const button=header.querySelector(".discussion-sort-button");
+    const icon=header.querySelector(".discussion-sort-icon");
+
+    header.setAttribute(
+      "aria-sort",
+      active
+        ?discussionSort.direction==="asc"?"ascending":"descending"
+        :"none"
+    );
+
+    if(button){
+      button.classList.toggle("active",active);
+      button.title=active
+        ?`Sorted ${discussionSort.direction==="asc"?"ascending":"descending"}. Click to reverse.`
+        :"Click to sort this column.";
+    }
+
+    if(icon){
+      icon.textContent=active
+        ?discussionSort.direction==="asc"?"▲":"▼"
+        :"↕";
+    }
+  });
+}
+
+function hydrateMetrics(snapshot){
+  const source=Array.isArray(snapshot)&&snapshot.length?snapshot:defaultMetrics;
+  return source.map(metric=>{
+    const value=Number(metric.value);
+    const target=Number(metric.target);
+    return {
+      id:metric.id||`metric_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      group:["RUN","PROTECT","PEOPLE","CONTROL"].includes(metric.group)?metric.group:"RUN",
+      name:String(metric.name||"Untitled Metric"),
+      value:Number.isFinite(value)?value:0,
+      target:Number.isFinite(target)?target:0,
+      unit:String(metric.unit||""),
+      direction:metric.direction==="lower"?"lower":"higher",
+      prior:Number.isFinite(Number(metric.prior))?Number(metric.prior):value
+    };
+  });
+}
+
+function hydrateMetricConfig(config){
+  const source=config&&typeof config==="object"?config:{};
+  return {
+    dashboardTitle:String(source.dashboardTitle||defaultMetricConfig.dashboardTitle),
+    dashboardSubtitle:String(source.dashboardSubtitle??defaultMetricConfig.dashboardSubtitle),
+    groups:{
+      RUN:String(source.groups?.RUN||defaultMetricConfig.groups.RUN),
+      PROTECT:String(source.groups?.PROTECT||defaultMetricConfig.groups.PROTECT),
+      PEOPLE:String(source.groups?.PEOPLE||defaultMetricConfig.groups.PEOPLE),
+      CONTROL:String(source.groups?.CONTROL||defaultMetricConfig.groups.CONTROL)
+    }
+  };
+}
+
+function metricsSnapshot(){
+  return metrics.map(metric=>({
+    id:metric.id,group:metric.group,name:metric.name,
+    value:Number(metric.value),target:Number(metric.target),
+    unit:metric.unit,direction:metric.direction,prior:metric.prior
+  }));
+}
+
+function newestArchiveForDate(date){
+  return meetingHistory
+    .filter(meeting=>meeting.meetingDate===date)
+    .sort((a,b)=>new Date(b.archivedAt||0)-new Date(a.archivedAt||0))[0]||null;
+}
+
+function latestMetricsBefore(date){
+  const candidates=[];
+  Object.entries(meetingPreps).forEach(([meetingDate,prep])=>{
+    if(meetingDate<date&&Array.isArray(prep.metrics)){
+      candidates.push({meetingDate,updatedAt:prep.updatedAt||meetingDate,metrics:prep.metrics});
+    }
+  });
+  meetingHistory.forEach(archive=>{
+    if(archive.meetingDate<date&&Array.isArray(archive.metrics)){
+      candidates.push({
+        meetingDate:archive.meetingDate,
+        updatedAt:archive.archivedAt||archive.meetingDate,
+        metrics:archive.metrics
+      });
+    }
+  });
+  candidates.sort((a,b)=>{
+    const dateCompare=String(b.meetingDate).localeCompare(String(a.meetingDate));
+    return dateCompare||new Date(b.updatedAt||0)-new Date(a.updatedAt||0);
+  });
+  return candidates.length?hydrateMetrics(candidates[0].metrics):hydrateMetrics(defaultMetrics);
+}
+
+function saveCurrentMeetingPrep(date=activeMeetingDate){
+  if(!date) return;
+  meetingPreps[date]={
+    meetingDate:date,
+    headline:$("headline")?.value||"",
+    metrics:metricsSnapshot(),
+    openItemIds:items.filter(item=>!isClosedStatus(item.status)).map(item=>item.id),
+    discussItemIds:items.filter(item=>item.status==="Discuss").map(item=>item.id),
+    updatedAt:new Date().toISOString()
+  };
+  localStorage.setItem(PREPS,JSON.stringify(meetingPreps));
+  localStorage.setItem(MEET,JSON.stringify({
+    date,
+    headline:meetingPreps[date].headline
+  }));
+}
+
+function meetingItemsForDate(date){
+  return items.filter(item=>item.meetingDate===date);
+}
+
+function updateDateContext(message=""){
+  return;
+}
+
+function switchMeetingDate(newDate,{skipSave=false}={}){
+  if(!newDate) return;
+  if(!skipSave&&activeMeetingDate){
+    saveCurrentMeetingPrep(activeMeetingDate);
+  }
+  activeMeetingDate=newDate;
+  $("meetingDate").value=newDate;
+
+  const prep=meetingPreps[newDate];
+  const archive=newestArchiveForDate(newDate);
+  const source=prep||archive;
+
+  if(source){
+    $("headline").value=source.headline||"";
+    metrics=hydrateMetrics(source.metrics||defaultMetrics);
+    updateDateContext(prep?"Restored saved preparation.":"Restored archived meeting snapshot.");
+  }else{
+    $("headline").value="";
+    metrics=latestMetricsBefore(newDate);
+    updateDateContext("New meeting preparation created.");
+  }
+
+  localStorage.setItem(MEET,JSON.stringify({
+    date:newDate,
+    headline:$("headline").value
+  }));
+
+  saveCurrentMeetingPrep(newDate);
+  save();
+  render();
+}
+
+function meetingItemSort(a,b){
+  const aCurrent=a.meetingDate===activeMeetingDate?0:1;
+  const bCurrent=b.meetingDate===activeMeetingDate?0:1;
+  if(aCurrent!==bCurrent) return aCurrent-bCurrent;
+  const aCreated=new Date(a.createdAt||0).getTime();
+  const bCreated=new Date(b.createdAt||0).getTime();
+  if(aCreated!==bCreated) return bCreated-aCreated;
+  const priority={High:1,Medium:2,Low:3};
+  return (priority[a.priority]||9)-(priority[b.priority]||9)
+    ||a.title.localeCompare(b.title);
+}
+
+function applyAppTitle(){
+  const title=(appTitle||"CEO Conversation Tracker").trim()||"CEO Conversation Tracker";
+  appTitle=title;
+  const display=$("appTitleDisplay");
+  if(display) display.textContent=title;
+  document.title=title;
+}
+
+function changeAppTitle(){
+  const updated=prompt("Enter the app title:",appTitle||"CEO Conversation Tracker");
+  if(updated===null) return;
+
+  const cleaned=updated.trim();
+  if(!cleaned){
+    alert("The app title cannot be blank.");
+    return;
+  }
+
+  appTitle=cleaned;
+  applyAppTitle();
+  save();
+}
+
+function hydrateProjects(snapshot){
+  const source=Array.isArray(snapshot)?snapshot:[];
+  return source.map(project=>{
+    const percent=Math.max(0,Math.min(100,Number(project.percent)||0));
+    const status=["Green","Yellow","Red"].includes(project.status)?project.status:"Yellow";
+    return {
+      id:project.id||`project_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+      name:String(project.name||"Untitled Project"),
+      status,
+      percent,
+      owner:String(project.owner||""),
+      note:String(project.note||""),
+      updatedAt:project.updatedAt||new Date().toISOString()
+    };
+  });
+}
+
+function projectSummary(){
+  const total=projects.length;
+  const green=projects.filter(project=>project.status==="Green").length;
+  const yellow=projects.filter(project=>project.status==="Yellow").length;
+  const red=projects.filter(project=>project.status==="Red").length;
+  const average=total
+    ?Math.round(projects.reduce((sum,project)=>sum+Number(project.percent||0),0)/total)
+    :0;
+  const overall=red?"Red":yellow?"Yellow":green?"Green":"—";
+  return {total,green,yellow,red,average,overall};
+}
+
+function projectStatusOrder(status){
+  return {Red:1,Yellow:2,Green:3}[status]||9;
+}
+
+function renderProjects(){
+  const body=$("projectTableBody");
+  if(!body) return;
+
+  const summary=projectSummary();
+  $("projectTotal").textContent=summary.total;
+  $("projectGreen").textContent=summary.green;
+  $("projectYellow").textContent=summary.yellow;
+  $("projectRed").textContent=summary.red;
+  $("projectAverage").textContent=summary.average+"%";
+
+  const overall=$("projectOverall");
+  overall.textContent=summary.overall;
+  overall.className=summary.overall==="—"?"":`portfolio-${summary.overall.toLowerCase()}`;
+
+  body.innerHTML="";
+  const sorted=[...projects].sort((a,b)=>
+    projectStatusOrder(a.status)-projectStatusOrder(b.status)
+    ||Number(a.percent)-Number(b.percent)
+    ||a.name.localeCompare(b.name)
+  );
+
+  if(!sorted.length){
+    body.innerHTML=`
+      <tr>
+        <td colspan="6" class="empty">
+          No projects have been added. <button type="button" onclick="openProjectEditor()">+ Add Project</button>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  sorted.forEach(project=>{
+    const row=document.createElement("tr");
+    row.innerHTML=`
+      <td class="project-name">${esc(project.name)}</td>
+      <td>
+        <select class="project-status-select"
+          onchange="updateProjectInline('${project.id}','status',this.value)">
+          <option value="Green" ${project.status==="Green"?"selected":""}>Green</option>
+          <option value="Yellow" ${project.status==="Yellow"?"selected":""}>Yellow</option>
+          <option value="Red" ${project.status==="Red"?"selected":""}>Red</option>
+        </select>
+      </td>
+      <td>
+        <div class="project-progress">
+          <input type="number" min="0" max="100" step="1" value="${Number(project.percent)}"
+            onchange="updateProjectInline('${project.id}','percent',this.value)">
+          <span>%</span>
+          <div class="progress-track"><div class="progress-fill" style="width:${Number(project.percent)}%"></div></div>
+        </div>
+      </td>
+      <td>${esc(project.owner||"—")}</td>
+      <td class="project-note">${esc(project.note||"—")}</td>
+      <td>
+        <div class="project-actions">
+          <button type="button" onclick="openProjectEditor('${project.id}')">Edit</button>
+          <button type="button" class="danger" onclick="removeProject('${project.id}')">Remove</button>
+        </div>
+      </td>`;
+    body.appendChild(row);
+  });
+}
+
+function openProjectEditor(projectId=null){
+  const project=projectId?projects.find(item=>item.id===projectId):null;
+
+  $("projectForm").reset();
+  $("projectId").value=project?.id||"";
+  $("projectFormTitle").textContent=project?"Edit Project":"Add Project";
+  $("projectName").value=project?.name||"";
+  $("projectStatus").value=project?.status||"Green";
+  $("projectPercent").value=project?.percent??0;
+  $("projectOwner").value=project?.owner||"";
+  $("projectNote").value=project?.note||"";
+  $("deleteProjectBtn").classList.toggle("hidden",!project);
+  $("projectModal").classList.add("open");
+}
+
+function closeProjectEditor(){
+  $("projectModal").classList.remove("open");
+}
+
+$("projectForm").onsubmit=event=>{
+  event.preventDefault();
+
+  const id=$("projectId").value;
+  const existing=projects.find(project=>project.id===id);
+  const percent=Math.max(0,Math.min(100,Number($("projectPercent").value)||0));
+
+  const project={
+    id:id||`project_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    name:$("projectName").value.trim(),
+    status:$("projectStatus").value,
+    percent,
+    owner:$("projectOwner").value.trim(),
+    note:$("projectNote").value.trim(),
+    updatedAt:new Date().toISOString()
+  };
+
+  projects=id
+    ?projects.map(item=>item.id===id?project:item)
+    :[...projects,project];
+
+  save();
+  closeProjectEditor();
+  renderProjects();
+  buildAgenda();
+};
+
+function updateProjectInline(projectId,field,value){
+  projects=projects.map(project=>{
+    if(project.id!==projectId) return project;
+    const updated={...project,updatedAt:new Date().toISOString()};
+    if(field==="percent"){
+      updated.percent=Math.max(0,Math.min(100,Number(value)||0));
+    }else if(field==="status"&&["Green","Yellow","Red"].includes(value)){
+      updated.status=value;
+    }
+    return updated;
+  });
+
+  save();
+  renderProjects();
+  buildAgenda();
+}
+
+function removeProject(projectId){
+  const project=projects.find(item=>item.id===projectId);
+  if(!project) return;
+  if(!confirm(`Remove the project "${project.name}"?`)) return;
+
+  projects=projects.filter(item=>item.id!==projectId);
+  save();
+  renderProjects();
+  buildAgenda();
+}
+
+function deleteProjectFromEditor(){
+  const projectId=$("projectId").value;
+  if(!projectId) return;
+  closeProjectEditor();
+  removeProject(projectId);
+}
+
+function projectSnapshot(){
+  return projects.map(project=>({
+    id:project.id,
+    name:project.name,
+    status:project.status,
+    percent:Number(project.percent),
+    owner:project.owner,
+    note:project.note
+  }));
+}
+
+function addHistory(item,text,kind="activity"){
+  item.history=Array.isArray(item.history)?item.history:[];
+  item.history.push({
+    id:crypto.randomUUID(),
+    date:new Date().toISOString(),
+    text,
+    kind:kind==="comment"?"comment":"activity"
+  });
+}
+
+function personFeedbackEntries(item){
+  return [...(item?.history||[])]
+    .filter(entry=>entry.kind==="comment")
+    .sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
+
+function latestPersonFeedback(item){
+  return personFeedbackEntries(item)[0]?.text?.trim()||"";
+}
+
+function resultingFeedback(item){
+  return String(item?.feedbackSummary||"").trim()||latestPersonFeedback(item);
+}
+
+function localDateKey(value){
+  const date=new Date(value);
+  if(Number.isNaN(date.getTime())) return "";
+  const year=date.getFullYear();
+  const month=String(date.getMonth()+1).padStart(2,"0");
+  const day=String(date.getDate()).padStart(2,"0");
+  return `${year}-${month}-${day}`;
+}
+
+function itemTouchedOnMeetingDate(item,date){
+  return item.meetingDate===date ||
+    personFeedbackEntries(item).some(entry=>localDateKey(entry.date)===date);
+}
+
+function agendaOutcomeItems(date){
+  return items
+    .filter(item=>{
+      const result=resultingFeedback(item);
+      if(!result) return false;
+      return !isClosedStatus(item.status) || itemTouchedOnMeetingDate(item,date);
+    })
+    .sort(meetingItemSort);
+}
+
+function historyEntryHtml(entry,itemId){
+  const date=new Date(entry.date);
+  const validDate=Number.isNaN(date.getTime())?new Date():date;
+  const kind=entry.kind==="comment"?"comment":"activity";
+  return `
+    <div class="comment-entry ${kind}">
+      <div class="comment-time">${validDate.toLocaleDateString()}<br>${validDate.toLocaleTimeString([],{
+        hour:"numeric",minute:"2-digit"
+      })}</div>
+      <div class="comment-text">${esc(entry.text||"")}</div>
+      <div class="history-entry-actions">
+        <button type="button" class="history-delete"
+          onclick="deleteHistoryEntry('${itemId}','${entry.id}')">Delete</button>
+      </div>
+    </div>`;
+}
+
+function deleteHistoryEntry(itemId,entryId){
+  const item=items.find(entry=>entry.id===itemId);
+  if(!item) return;
+
+  const historyEntry=(item.history||[]).find(entry=>entry.id===entryId);
+  if(!historyEntry) return;
+
+  const entryLabel=historyEntry.kind==="comment"?"comment":"activity";
+  const entryDate=new Date(historyEntry.date);
+  const dateLabel=Number.isNaN(entryDate.getTime())
+    ?"the selected entry"
+    :entryDate.toLocaleString();
+
+  if(!confirm(`Delete this ${entryLabel} from ${dateLabel}?`)) return;
+
+  item.history=(item.history||[]).filter(entry=>entry.id!==entryId);
+
+  if(
+    historyEntry.kind==="comment" &&
+    String(item.feedbackSummary||"").trim()===String(historyEntry.text||"").trim()
+  ){
+    item.feedbackSummary=latestPersonFeedback(item);
+  }
+
+  item.updatedAt=new Date().toISOString();
+  save();
+  saveCurrentMeetingPrep();
+
+  if($("id")?.value===itemId){
+    $("feedbackSummary").value=item.feedbackSummary||"";
+    renderInlineItemHistory(item);
+  }
+
+  if($("itemDetailModal")?.classList.contains("open")){
+    openItemDetails(itemId);
+  }
+
+  if($("historyModal")?.classList.contains("open")){
+    showItemHistory(itemId);
+  }
+
+  render();
+}
+
+function renderInlineItemHistory(item){
+  const container=$("inlineItemHistory");
+  if(!container) return;
+
+  const history=[...(item?.history||[])].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  container.innerHTML=history.length
+    ?history.map(entry=>historyEntryHtml(entry,item?.id||"")).join("")
+    :'<div class="inline-history-empty">No comments or activity have been recorded yet.</div>';
+}
+
+function esc(s=""){
+  return String(s).replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
+}
+
+function overdue(x){
+  if(!x.due||isClosedStatus(x.status)) return false;
+  const today=new Date(); today.setHours(0,0,0,0);
+  return new Date(x.due+"T00:00:00")<today;
+}
+
+function filtered(){
+  const q=$("search").value.toLowerCase();
+  const s=$("filterStatus").value;
+  const t=$("filterType").value;
+  const c=$("filterCategory").value;
+  const p=$("filterPriority").value;
+
+  return items.filter(x=>{
+    const historyText=(x.history||[]).map(h=>h.text).join(" ");
+    const hay=[
+      x.title,x.type,x.category,x.priority,x.status,x.owner,
+      x.outcome,x.notes,x.feedbackSummary,historyText
+    ].join(" ").toLowerCase();
+
+    return hay.includes(q) &&
+      (!s||x.status===s) &&
+      (!t||x.type===t) &&
+      (!c||x.category===c) &&
+      (!p||x.priority===p);
+  });
+}
+
+function statusCss(status){
+  return status==="Waiting"?"waiting":String(status||"").toLowerCase();
+}
+
+function shortText(value,maxLength=180){
+  const clean=String(value||"").replace(/\s+/g," ").trim();
+  return clean.length<=maxLength
+    ?clean
+    :clean.slice(0,maxLength-1).trimEnd()+"…";
+}
+
+function discussionRowHtml(item){
+  const historyCount=(item.history||[]).length;
+  const dueLabel=item.due
+    ?new Date(item.due+"T00:00:00").toLocaleDateString()
+    :"—";
+  const feedback=resultingFeedback(item);
+  const outcome=shortText(item.outcome||"No outcome defined.",150);
+  const feedbackText=feedback?shortText(feedback,150):"";
+
+  return `
+    <tr class="${overdue(item)?"overdue":""}">
+      <td class="discussion-topic">
+        <div class="discussion-topic-title">${esc(item.title)}</div>
+        <div class="discussion-topic-meta">
+          <span class="badge">${esc(item.category)}</span>
+          ${item.meetingDate===activeMeetingDate
+            ?`<span class="badge meeting-date-badge">New for ${new Date(activeMeetingDate+"T00:00:00").toLocaleDateString(undefined,{month:"short",day:"numeric"})}</span>`
+            :""}
+          <span class="history-count">${historyCount} history ${historyCount===1?"entry":"entries"}</span>
+        </div>
+      </td>
+      <td>
+        <select class="item-status-select"
+          style="${statusInlineStyle(item.status)}"
+          aria-label="Status for ${esc(item.title)}"
+          onchange="move('${item.id}',this.value)">
+          ${statusOptions(item.status)}
+        </select>
+      </td>
+      <td><span class="badge">${esc(item.type)}</span></td>
+      <td><span class="badge ${item.priority.toLowerCase()}">${esc(item.priority)}</span></td>
+      <td class="discussion-owner">${esc(item.owner||"—")}</td>
+      <td class="discussion-due">
+        ${esc(dueLabel)}
+        ${overdue(item)?'<div class="badge high" style="margin-top:4px">Overdue</div>':""}
+      </td>
+      <td class="discussion-outcome">
+        <strong>Outcome needed</strong>
+        <div class="discussion-outcome-text">${esc(outcome)}</div>
+        ${feedbackText
+          ?`<div class="discussion-feedback"><b>Result:</b> ${esc(feedbackText)}</div>`
+          :""}
+      </td>
+      <td>
+        <button type="button" class="row-detail-button"
+          onclick="openItemDetails('${item.id}')">View Details</button>
+      </td>
+    </tr>`;
+}
+
+function lastArchivedMetric(metricId){
+  for(const meeting of meetingHistory){
+    const found=(meeting.metrics||[]).find(m=>m.id===metricId);
+    if(found) return Number(found.value);
+  }
+  const metric=metrics.find(m=>m.id===metricId);
+  return Number(metric?.prior);
+}
+
+function metricStatus(metric){
+  const value=Number(metric.value);
+  const target=Number(metric.target);
+  if(!Number.isFinite(value)||!Number.isFinite(target)) return "Amber";
+  if(metric.direction==="higher"){
+    if(value>=target) return "Green";
+    if(value>=target*0.9) return "Amber";
+    return "Red";
+  }
+  if(target===0) return value===0?"Green":"Red";
+  if(value<=target) return "Green";
+  if(value<=target*1.1) return "Amber";
+  return "Red";
+}
+
+function metricTrend(metric){
+  const current=Number(metric.value);
+  const previous=lastArchivedMetric(metric.id);
+  if(!Number.isFinite(previous)||current===previous) return "→";
+  if(metric.direction==="higher") return current>previous?"↑":"↓";
+  return current<previous?"↑":"↓";
+}
+
+function monthKey(dateValue){
+  const date=new Date(String(dateValue||"").slice(0,10)+"T00:00:00");
+  if(Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}`;
+}
+
+function monthLabel(key,{long=false}={}){
+  if(!key) return "";
+  const [year,month]=key.split("-").map(Number);
+  const date=new Date(year,month-1,1);
+  return date.toLocaleDateString(undefined,long
+    ?{month:"long",year:"numeric"}
+    :{month:"short",year:"2-digit"});
+}
+
+function metricDisplayValue(value,unit=""){
+  const number=Number(value);
+  if(!Number.isFinite(number)) return "—";
+  const formatted=Number.isInteger(number)
+    ?number.toLocaleString()
+    :number.toLocaleString(undefined,{maximumFractionDigits:2});
+  return `${formatted}${unit||""}`;
+}
+
+function monthlyMetricHistory(metric,limit=12){
+  const byMonth=new Map();
+
+  const addPoint=(meetingDate,updatedAt,snapshot,source)=>{
+    if(!meetingDate||!snapshot) return;
+    const key=monthKey(meetingDate);
+    if(!key) return;
+
+    const value=Number(snapshot.value);
+    if(!Number.isFinite(value)) return;
+
+    const point={
+      key,
+      meetingDate,
+      updatedAt:updatedAt||meetingDate,
+      value,
+      target:Number.isFinite(Number(snapshot.target))
+        ?Number(snapshot.target)
+        :Number(metric.target),
+      unit:String(snapshot.unit??metric.unit??""),
+      direction:snapshot.direction==="lower"?"lower":metric.direction,
+      source
+    };
+
+    const existing=byMonth.get(key);
+    if(
+      !existing ||
+      String(point.meetingDate)>String(existing.meetingDate) ||
+      (
+        String(point.meetingDate)===String(existing.meetingDate) &&
+        new Date(point.updatedAt||0)>new Date(existing.updatedAt||0)
+      )
+    ){
+      byMonth.set(key,point);
+    }
+  };
+
+  meetingHistory.forEach(archive=>{
+    const snapshot=(archive.metrics||[]).find(entry=>entry.id===metric.id);
+    addPoint(
+      archive.meetingDate,
+      archive.archivedAt,
+      snapshot,
+      "Archived meeting"
+    );
+  });
+
+  Object.entries(meetingPreps||{}).forEach(([meetingDate,prep])=>{
+    const snapshot=(prep.metrics||[]).find(entry=>entry.id===metric.id);
+    addPoint(
+      meetingDate,
+      prep.updatedAt,
+      snapshot,
+      "Saved preparation"
+    );
+  });
+
+  addPoint(
+    activeMeetingDate||$("meetingDate")?.value,
+    new Date().toISOString(),
+    metric,
+    "Current dashboard"
+  );
+
+  return [...byMonth.values()]
+    .sort((a,b)=>a.key.localeCompare(b.key))
+    .slice(-Math.max(1,Number(limit)||12));
+}
+
+function sparklineGeometry(points,width=240,height=52,padding=6){
+  const values=points.map(point=>Number(point.value)).filter(Number.isFinite);
+  if(!values.length) return {coordinates:[],min:0,max:0};
+
+  let min=Math.min(...values);
+  let max=Math.max(...values);
+  if(min===max){
+    const adjustment=Math.abs(min)*0.05||1;
+    min-=adjustment;
+    max+=adjustment;
+  }
+
+  const usableWidth=Math.max(1,width-padding*2);
+  const usableHeight=Math.max(1,height-padding*2);
+  const denominator=Math.max(1,points.length-1);
+
+  const coordinates=points.map((point,index)=>({
+    x:padding+(index/denominator)*usableWidth,
+    y:padding+((max-Number(point.value))/(max-min))*usableHeight
+  }));
+
+  return {coordinates,min,max};
+}
+
+function monthlySparklineHtml(metric,points){
+  if(!points.length){
+    return '<div class="metric-trend-empty">Archive a monthly meeting to begin the trend.</div>';
+  }
+
+  const width=250;
+  const height=42;
+  const padding=5;
+  const {coordinates,min,max}=sparklineGeometry(points,width,height,padding);
+  const polyline=coordinates.map(point=>`${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+  const target=Number(metric.target);
+  const targetY=Number.isFinite(target)&&max!==min
+    ?padding+((max-target)/(max-min))*(height-padding*2)
+    :null;
+  const safeTargetY=targetY===null
+    ?null
+    :Math.max(padding,Math.min(height-padding,targetY));
+
+  const dots=coordinates.map((point,index)=>`
+    <circle class="metric-sparkline-dot ${index===coordinates.length-1?"current":""}"
+      cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="${index===coordinates.length-1?2.8:2.1}">
+      <title>${esc(monthLabel(points[index].key,{long:true}))}: ${esc(metricDisplayValue(points[index].value,metric.unit))}</title>
+    </circle>`).join("");
+
+  return `
+    <svg class="metric-sparkline" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"
+      role="img" aria-label="Monthly trend for ${esc(metric.name)}">
+      ${safeTargetY===null?"":`<line class="metric-sparkline-target" x1="${padding}" y1="${safeTargetY.toFixed(1)}" x2="${width-padding}" y2="${safeTargetY.toFixed(1)}"><title>Target ${esc(metricDisplayValue(target,metric.unit))}</title></line>`}
+      ${coordinates.length>1?`<polyline class="metric-sparkline-line" points="${polyline}"></polyline>`:""}
+      ${dots}
+    </svg>
+    <div class="metric-month-points" style="--month-count:${points.length}">
+      ${points.map(point=>`
+        <div class="metric-month-point">
+          <small>${esc(monthLabel(point.key))}</small>
+          <strong>${esc(metricDisplayValue(point.value,metric.unit))}</strong>
+        </div>`).join("")}
+    </div>`;
+}
+
+function largeTrendSvg(metric,points){
+  if(!points.length){
+    return '<div class="empty">No monthly history is available for this metric.</div>';
+  }
+
+  const width=820;
+  const height=220;
+  const left=52;
+  const right=18;
+  const top=18;
+  const bottom=42;
+  const values=points.map(point=>Number(point.value));
+  const target=Number(metric.target);
+  const chartValues=Number.isFinite(target)?[...values,target]:values;
+
+  let min=Math.min(...chartValues);
+  let max=Math.max(...chartValues);
+  if(min===max){
+    const adjustment=Math.abs(min)*0.05||1;
+    min-=adjustment;
+    max+=adjustment;
+  }
+
+  const x=index=>left+(index/Math.max(1,points.length-1))*(width-left-right);
+  const y=value=>top+((max-Number(value))/(max-min))*(height-top-bottom);
+  const coordinates=points.map((point,index)=>({x:x(index),y:y(point.value)}));
+  const polyline=coordinates.map(point=>`${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+  const targetY=Number.isFinite(target)?y(target):null;
+
+  const gridLines=[0,.25,.5,.75,1].map(ratio=>{
+    const value=max-(max-min)*ratio;
+    const py=top+(height-top-bottom)*ratio;
+    return `
+      <line x1="${left}" y1="${py}" x2="${width-right}" y2="${py}" stroke="#e3e8ef" stroke-width="1"></line>
+      <text x="${left-8}" y="${py+4}" text-anchor="end" font-size="10" fill="#667085">${esc(metricDisplayValue(value,metric.unit))}</text>`;
+  }).join("");
+
+  const labels=points.map((point,index)=>`
+    <text x="${x(index)}" y="${height-15}" text-anchor="middle" font-size="10" fill="#667085">${esc(monthLabel(point.key))}</text>
+  `).join("");
+
+  const dots=coordinates.map((point,index)=>`
+    <circle cx="${point.x}" cy="${point.y}" r="4" fill="${index===coordinates.length-1?"#2f75b5":"#fff"}" stroke="#2f75b5" stroke-width="2">
+      <title>${esc(monthLabel(points[index].key,{long:true}))}: ${esc(metricDisplayValue(points[index].value,metric.unit))}</title>
+    </circle>`).join("");
+
+  return `
+    <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Twelve month trend for ${esc(metric.name)}">
+      ${gridLines}
+      ${targetY===null?"":`
+        <line x1="${left}" y1="${targetY}" x2="${width-right}" y2="${targetY}" stroke="#a86800" stroke-width="1.5" stroke-dasharray="6 4"></line>
+        <text x="${width-right}" y="${targetY-5}" text-anchor="end" font-size="10" fill="#a86800">Target ${esc(metricDisplayValue(target,metric.unit))}</text>`}
+      ${coordinates.length>1?`<polyline points="${polyline}" fill="none" stroke="#2f75b5" stroke-width="3"></polyline>`:""}
+      ${dots}
+      ${labels}
+    </svg>`;
+}
+
+function openMetricTrend(metricId){
+  const metric=metrics.find(entry=>entry.id===metricId);
+  if(!metric) return;
+
+  const points=monthlyMetricHistory(metric,12);
+  $("metricTrendTitle").textContent=`Monthly Trend — ${metric.name}`;
+  $("metricTrendSummary").textContent=points.length
+    ?`${points.length} month${points.length===1?"":"s"} shown · Target ${metricDisplayValue(metric.target,metric.unit)} · ${metric.direction==="higher"?"Higher":"Lower"} is better`
+    :"No monthly history is available yet.";
+
+  $("metricTrendChart").innerHTML=largeTrendSvg(metric,points);
+
+  $("metricTrendTableBody").innerHTML=points.length
+    ?[...points].reverse().map(point=>{
+      const status=metricStatus({
+        ...metric,
+        value:point.value,
+        target:point.target,
+        direction:point.direction
+      });
+      return `
+        <tr>
+          <td>${esc(monthLabel(point.key,{long:true}))}</td>
+          <td><b>${esc(metricDisplayValue(point.value,point.unit))}</b></td>
+          <td>${esc(metricDisplayValue(point.target,point.unit))}</td>
+          <td><span class="metric-rag ${status.toLowerCase()}">${status}</span></td>
+          <td>${new Date(point.meetingDate+"T00:00:00").toLocaleDateString()} · ${esc(point.source)}</td>
+        </tr>`;
+    }).join("")
+    :'<tr><td colspan="5" class="empty">Archive monthly meetings to build this trend.</td></tr>';
+
+  $("metricTrendModal").classList.add("open");
+}
+
+function closeMetricTrend(){
+  $("metricTrendModal").classList.remove("open");
+}
+
+function metricGroupTitle(group){
+  return metricConfig.groups[group]||group;
+}
+
+function applyMetricDashboardTitles(){
+  const title=$("metricsDashboardTitle");
+  const subtitle=$("metricsDashboardSubtitle");
+  if(title) title.textContent=metricConfig.dashboardTitle;
+  if(subtitle) subtitle.textContent=metricConfig.dashboardSubtitle;
+}
+
+function metricGroupOptions(selectedGroup){
+  return ["RUN","PROTECT","PEOPLE","CONTROL"]
+    .map(group=>`<option value="${group}" ${group===selectedGroup?"selected":""}>${esc(metricGroupTitle(group))}</option>`)
+    .join("");
+}
+
+function renderMetrics(){
+  const grid=$("metricsGrid");
+  if(!grid) return;
+
+  applyMetricDashboardTitles();
+  grid.innerHTML="";
+
+  ["RUN","PROTECT","PEOPLE","CONTROL"].forEach(group=>{
+    const section=document.createElement("div");
+    section.className="metric-group";
+    section.dataset.group=group;
+    section.innerHTML=`
+      <div class="metric-group-title">
+        <span>${esc(metricGroupTitle(group))}</span>
+        <button type="button" onclick="openDashboardTitleEditor()">Rename</button>
+      </div>`;
+
+    const groupMetrics=metrics.filter(metric=>metric.group===group);
+
+    if(!groupMetrics.length){
+      const empty=document.createElement("div");
+      empty.className="empty";
+      empty.innerHTML=`No metrics<br><button type="button" onclick="openMetricEditor(null,'${group}')">+ Add Metric</button>`;
+      section.appendChild(empty);
+    }
+
+    groupMetrics.forEach((metric,groupIndex)=>{
+      const status=metricStatus(metric);
+      const row=document.createElement("div");
+      const canMoveUp=groupIndex>0;
+      const canMoveDown=groupIndex<groupMetrics.length-1;
+
+      row.className="metric-row";
+      row.innerHTML=`
+        <div class="metric-info">
+          <div class="metric-name">${esc(metric.name)}</div>
+          <div class="metric-settings">
+            <span>Target</span>
+            <input type="number" step="0.1" value="${Number(metric.target)}"
+              aria-label="${esc(metric.name)} target"
+              onchange="updateMetric('${metric.id}','target',this.value)">
+            <select aria-label="${esc(metric.name)} direction"
+              onchange="updateMetric('${metric.id}','direction',this.value)">
+              <option value="higher" ${metric.direction==="higher"?"selected":""}>Higher is better</option>
+              <option value="lower" ${metric.direction==="lower"?"selected":""}>Lower is better</option>
+            </select>
+          </div>
+          <div class="metric-row-actions">
+            <button type="button" class="metric-move"
+              title="Move metric up"
+              aria-label="Move ${esc(metric.name)} up"
+              onclick="moveMetric('${metric.id}',-1)"
+              ${canMoveUp?"":"disabled"}>↑</button>
+            <button type="button" class="metric-move"
+              title="Move metric down"
+              aria-label="Move ${esc(metric.name)} down"
+              onclick="moveMetric('${metric.id}',1)"
+              ${canMoveDown?"":"disabled"}>↓</button>
+            <button type="button" onclick="openMetricEditor('${metric.id}')">Edit</button>
+            <button type="button" class="remove-metric" onclick="removeMetric('${metric.id}')">Remove</button>
+          </div>
+        </div>
+        <div class="metric-value">
+          <div class="metric-value-wrap">
+            <input type="number" step="0.1" value="${Number(metric.value)}"
+              aria-label="${esc(metric.name)} current value"
+              onchange="updateMetric('${metric.id}','value',this.value)">
+            <span class="metric-unit">${esc(metric.unit||"")}</span>
+          </div>
+          <span class="metric-rag ${status.toLowerCase()}">${status}</span>
+          <span class="metric-trend" title="Compared with the most recent archived meeting">${metricTrend(metric)}</span>
+        </div>
+        <div class="metric-monthly-trend">
+          <div class="metric-trend-header">
+            <span>Month-by-month trend</span>
+            <button type="button" onclick="openMetricTrend('${metric.id}')">View 12 Months</button>
+          </div>
+          ${monthlySparklineHtml(metric,monthlyMetricHistory(metric,6))}
+        </div>`;
+      section.appendChild(row);
+    });
+
+    grid.appendChild(section);
+  });
+}
+
+function updateMetric(id,field,value){
+  metrics=metrics.map(metric=>{
+    if(metric.id!==id) return metric;
+    if(field==="value"||field==="target"){
+      const numeric=Number(value);
+      return {...metric,[field]:Number.isFinite(numeric)?numeric:0};
+    }
+    return {...metric,[field]:value};
+  });
+  save();
+  saveCurrentMeetingPrep();
+  renderMetrics();
+  buildAgenda();
+}
+
+function openMetricEditor(metricId=null,presetGroup="RUN"){
+  const metric=metricId?metrics.find(item=>item.id===metricId):null;
+
+  $("metricForm").reset();
+  $("metricId").value=metric?.id||"";
+  $("metricFormTitle").textContent=metric?"Edit Metric":"Add Metric";
+  $("metricGroup").innerHTML=metricGroupOptions(metric?.group||presetGroup);
+  $("metricName").value=metric?.name||"";
+  $("metricCurrentValue").value=metric?.value??0;
+  $("metricTargetValue").value=metric?.target??0;
+  $("metricUnit").value=metric?.unit||"";
+  $("metricDirection").value=metric?.direction||"higher";
+  $("deleteMetricBtn").classList.toggle("hidden",!metric);
+  $("metricModal").classList.add("open");
+}
+
+function closeMetricEditor(){
+  $("metricModal").classList.remove("open");
+}
+
+$("metricForm").onsubmit=event=>{
+  event.preventDefault();
+
+  const id=$("metricId").value;
+  const existing=metrics.find(metric=>metric.id===id);
+  const value=Number($("metricCurrentValue").value);
+  const target=Number($("metricTargetValue").value);
+
+  const metric={
+    id:id||`metric_${Date.now()}_${Math.random().toString(36).slice(2,8)}`,
+    group:$("metricGroup").value,
+    name:$("metricName").value.trim(),
+    value:Number.isFinite(value)?value:0,
+    target:Number.isFinite(target)?target:0,
+    unit:$("metricUnit").value.trim(),
+    direction:$("metricDirection").value==="lower"?"lower":"higher",
+    prior:existing?.prior??value
+  };
+
+  metrics=id
+    ?metrics.map(item=>item.id===id?metric:item)
+    :[...metrics,metric];
+
+  save();
+  saveCurrentMeetingPrep();
+  closeMetricEditor();
+  renderMetrics();
+  buildAgenda();
+};
+
+function moveMetric(metricId,direction){
+  const metric=metrics.find(item=>item.id===metricId);
+  if(!metric) return;
+
+  const groupMetricIds=metrics
+    .filter(item=>item.group===metric.group)
+    .map(item=>item.id);
+
+  const groupIndex=groupMetricIds.indexOf(metricId);
+  const targetGroupIndex=groupIndex+Number(direction);
+
+  if(
+    groupIndex<0 ||
+    targetGroupIndex<0 ||
+    targetGroupIndex>=groupMetricIds.length
+  ) return;
+
+  const targetMetricId=groupMetricIds[targetGroupIndex];
+  const currentArrayIndex=metrics.findIndex(item=>item.id===metricId);
+  const targetArrayIndex=metrics.findIndex(item=>item.id===targetMetricId);
+
+  [metrics[currentArrayIndex],metrics[targetArrayIndex]]=
+    [metrics[targetArrayIndex],metrics[currentArrayIndex]];
+
+  save();
+  saveCurrentMeetingPrep();
+  renderMetrics();
+  buildAgenda();
+}
+
+function removeMetric(metricId){
+  const metric=metrics.find(item=>item.id===metricId);
+  if(!metric) return;
+
+  if(!confirm(`Remove the metric "${metric.name}"?`)) return;
+
+  metrics=metrics.filter(item=>item.id!==metricId);
+  save();
+  saveCurrentMeetingPrep();
+  renderMetrics();
+  buildAgenda();
+}
+
+function deleteMetricFromEditor(){
+  const metricId=$("metricId").value;
+  if(!metricId) return;
+  closeMetricEditor();
+  removeMetric(metricId);
+}
+
+function openDashboardTitleEditor(){
+  $("dashboardTitleInput").value=metricConfig.dashboardTitle;
+  $("dashboardSubtitleInput").value=metricConfig.dashboardSubtitle;
+  $("groupTitleRun").value=metricConfig.groups.RUN;
+  $("groupTitleProtect").value=metricConfig.groups.PROTECT;
+  $("groupTitlePeople").value=metricConfig.groups.PEOPLE;
+  $("groupTitleControl").value=metricConfig.groups.CONTROL;
+  $("dashboardTitleModal").classList.add("open");
+}
+
+function closeDashboardTitleEditor(){
+  $("dashboardTitleModal").classList.remove("open");
+}
+
+$("dashboardTitleForm").onsubmit=event=>{
+  event.preventDefault();
+
+  metricConfig={
+    dashboardTitle:$("dashboardTitleInput").value.trim()||defaultMetricConfig.dashboardTitle,
+    dashboardSubtitle:$("dashboardSubtitleInput").value.trim(),
+    groups:{
+      RUN:$("groupTitleRun").value.trim()||defaultMetricConfig.groups.RUN,
+      PROTECT:$("groupTitleProtect").value.trim()||defaultMetricConfig.groups.PROTECT,
+      PEOPLE:$("groupTitlePeople").value.trim()||defaultMetricConfig.groups.PEOPLE,
+      CONTROL:$("groupTitleControl").value.trim()||defaultMetricConfig.groups.CONTROL
+    }
+  };
+
+  save();
+  closeDashboardTitleEditor();
+  renderMetrics();
+  buildAgenda();
+};
+
+function resetDashboardTitles(){
+  if(!confirm("Reset the dashboard and section titles to their original names?")) return;
+  metricConfig=hydrateMetricConfig(defaultMetricConfig);
+  save();
+  closeDashboardTitleEditor();
+  renderMetrics();
+}
+
+function resetMetrics(){
+  if(!confirm("Reset the KPI dashboard to the supplied monthly chart?")) return;
+  metrics=hydrateMetrics(defaultMetrics);
+  metricConfig=hydrateMetricConfig(defaultMetricConfig);
+  save();
+  saveCurrentMeetingPrep();
+  renderMetrics();
+  buildAgenda();
+}
+
+function openItemDetails(itemId){
+  const item=items.find(entry=>entry.id===itemId);
+  if(!item) return;
+
+  const history=[...(item.history||[])].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $("itemDetailTitle").textContent=item.title;
+
+  $("itemDetailBody").innerHTML=`
+    <div class="item-detail-grid">
+      <div class="item-detail-box">
+        <small>Type</small>
+        <div>${esc(item.type)}</div>
+      </div>
+      <div class="item-detail-box">
+        <small>Category</small>
+        <div>${esc(item.category)}</div>
+      </div>
+      <div class="item-detail-box">
+        <small>Priority</small>
+        <div>${esc(item.priority)}</div>
+      </div>
+      <div class="item-detail-box">
+        <small>Status</small>
+        <select class="detail-status-select item-status-select"
+          style="${statusInlineStyle(item.status)}"
+          aria-label="Status for ${esc(item.title)}"
+          onchange="changeItemStatusFromDetails('${item.id}',this.value)">
+          ${statusOptions(item.status)}
+        </select>
+        <div class="detail-status-note">Changes save immediately and are added to activity history.</div>
+      </div>
+      <div class="item-detail-box">
+        <small>Owner</small>
+        <div>${esc(item.owner||"—")}</div>
+      </div>
+      <div class="item-detail-box">
+        <small>Due Date</small>
+        <div>${item.due?new Date(item.due+"T00:00:00").toLocaleDateString():"No due date"}</div>
+      </div>
+      <div class="item-detail-box full">
+        <small>Decision / Outcome Needed</small>
+        <div>${esc(item.outcome||"No outcome recorded.")}</div>
+      </div>
+      <div class="item-detail-box full">
+        <small>Notes / Talking Points</small>
+        <div>${esc(item.notes||"No talking points recorded.")}</div>
+      </div>
+      <div class="item-detail-box full">
+        <small>Resulting Feedback / Decision</small>
+        <div>${esc(resultingFeedback(item)||"No resulting feedback has been recorded.")}</div>
+      </div>
+      <div class="item-detail-box full">
+        <small>Comments & Activity History</small>
+        <div class="inline-history">
+          ${history.length
+            ?history.map(entry=>historyEntryHtml(entry,item.id)).join("")
+            :'<div class="inline-history-empty">No comments or activity have been recorded yet.</div>'}
+        </div>
+      </div>
+    </div>`;
+
+  $("itemDetailActions").innerHTML=`
+    <button type="button" onclick="closeItemDetails()">Close</button>
+    <button type="button" onclick="editItemFromDetails('${item.id}')">Edit</button>
+    <button type="button" onclick="showHistoryFromDetails('${item.id}')">History</button>`;
+
+  $("itemDetailModal").classList.add("open");
+}
+
+function closeItemDetails(){
+  $("itemDetailModal").classList.remove("open");
+}
+
+function editItemFromDetails(itemId){
+  closeItemDetails();
+  editItem(itemId);
+}
+
+function showHistoryFromDetails(itemId){
+  closeItemDetails();
+  showItemHistory(itemId);
+}
+
+function changeItemStatusFromDetails(itemId,status){
+  move(itemId,status);
+  openItemDetails(itemId);
+}
+
+function moveFromDetails(itemId,status){
+  closeItemDetails();
+  move(itemId,status);
+}
+
+function render(){
+  const data=sortedDiscussionItems(filtered());
+  const tableBody=$("discussionTableBody");
+
+  if(tableBody){
+    tableBody.innerHTML=data.length
+      ?data.map(discussionRowHtml).join("")
+      :'<tr><td colspan="8"><div class="empty">No discussion items match the selected filters.</div></td></tr>';
+  }
+
+  renderDiscussionStatusSummary();
+  updateDiscussionSortHeaders();
+
+  $("sDiscuss").textContent=items.filter(x=>x.status==="Discuss").length;
+  $("sDecisions").textContent=items.filter(x=>x.type==="Decision"&&!isClosedStatus(x.status)).length;
+  $("sActions").textContent=items.filter(x=>x.type==="Action"&&!isClosedStatus(x.status)).length;
+  $("sOverdue").textContent=items.filter(overdue).length;
+
+  renderMetrics();
+  renderProjects();
+  updateDateContext();
+  buildAgenda();
+}
+
+function openForm(x){
+  $("form").reset();
+  $("id").value=x?.id||"";
+  $("title").value=x?.title||"";
+  $("type").value=x?.type||"Topic";
+  $("category").value=x?.category||"Operations";
+  $("priority").value=x?.priority||"Medium";
+  $("status").innerHTML=statusOptions(x?.status||"Discuss");
+  $("status").value=x?.status||"Discuss";
+  $("owner").value=x?.owner||"";
+  $("due").value=x?.due||"";
+  $("outcome").value=x?.outcome||"";
+  $("notes").value=x?.notes||"";
+  $("followup").value="";
+  $("feedbackSummary").value=x?.feedbackSummary||"";
+  renderInlineItemHistory(x);
+  $("formTitle").textContent=x?"Edit Item":"Add Item";
+  $("deleteBtn").classList.toggle("hidden",!x);
+  $("modal").classList.add("open");
+}
+
+function closeForm(){$("modal").classList.remove("open")}
+function editItem(id){openForm(items.find(x=>x.id===id))}
+
+function deleteItem(){
+  const id=$("id").value;
+  if(confirm("Delete this item?")){
+    items=items.filter(x=>x.id!==id);
+    save();
+    saveCurrentMeetingPrep();
+    closeForm();
+    render();
+  }
+}
+
+function move(id,status){
+  items=items.map(x=>{
+    if(x.id!==id) return x;
+    const old=x.status;
+    if(old!==status) addHistory(x,`Status changed from ${statusLabel(old)} to ${statusLabel(status)}.`);
+    return {...x,status,updatedAt:new Date().toISOString()};
+  });
+  save();
+  saveCurrentMeetingPrep();
+  render();
+}
+
+$("form").onsubmit=e=>{
+  e.preventDefault();
+  const id=$("id").value;
+  const existing=items.find(a=>a.id===id);
+  const x={
+    id:id||crypto.randomUUID(),
+    title:$("title").value.trim(),
+    type:$("type").value,
+    category:$("category").value,
+    priority:$("priority").value,
+    status:$("status").value,
+    owner:$("owner").value.trim(),
+    due:$("due").value,
+    outcome:$("outcome").value.trim(),
+    notes:$("notes").value.trim(),
+    feedbackSummary:$("feedbackSummary").value.trim(),
+    meetingDate:existing?.meetingDate||activeMeetingDate||$("meetingDate").value,
+    createdAt:existing?.createdAt||new Date().toISOString(),
+    updatedAt:new Date().toISOString(),
+    history:existing?.history||[]
+  };
+  if(!existing) addHistory(x,"Item created.");
+  if(existing&&existing.status!==x.status){
+    addHistory(x,`Status changed from ${statusLabel(existing.status)} to ${statusLabel(x.status)}.`);
+  }
+  const follow=$("followup").value.trim();
+  if(follow){
+    addHistory(x,follow,"comment");
+    if(!x.feedbackSummary) x.feedbackSummary=follow;
+  }
+  items=id?items.map(a=>a.id===id?x:a):[x,...items];
+  save();
+  saveCurrentMeetingPrep();
+  closeForm();
+  render();
+};
+
+function showItemHistory(id){
+  const x=items.find(a=>a.id===id);
+  if(!x) return;
+  $("historyTitle").textContent="History — "+x.title;
+  const history=[...(x.history||[])].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  $("historyTimeline").innerHTML=history.length
+    ?history.map(entry=>historyEntryHtml(entry,x.id)).join("")
+    :'<div class="empty">No comments or activity have been recorded yet.</div>';
+  $("historyModal").classList.add("open");
+}
+
+function closeItemHistory(){$("historyModal").classList.remove("open")}
+
+function archiveMeeting(){
+  saveCurrentMeetingPrep();
+  const date=$("meetingDate").value||new Date().toISOString().slice(0,10);
+  const discussed=items.filter(x=>x.status==="Discuss");
+  const followup=items.filter(x=>!isClosedStatus(x.status)&&(x.type==="Action"||x.type==="Decision"));
+  const meetingOutcomeItems=items.filter(item=>
+    !isClosedStatus(item.status) || itemTouchedOnMeetingDate(item,date)
+  );
+  const archive={
+    id:crypto.randomUUID(),
+    meetingDate:date,
+    headline:$("headline").value,
+    archivedAt:new Date().toISOString(),
+    metrics:metrics.map(m=>({
+      id:m.id,group:m.group,name:m.name,value:Number(m.value),target:Number(m.target),
+      unit:m.unit,direction:m.direction,status:metricStatus(m)
+    })),
+    projects:projectSnapshot(),
+    outcomes:meetingOutcomeItems.map(item=>({
+      id:item.id,
+      title:item.title,
+      type:item.type,
+      status:item.status,
+      statusLabel:statusLabel(item.status),
+      owner:item.owner,
+      due:item.due,
+      outcome:item.outcome,
+      feedbackSummary:resultingFeedback(item),
+      feedbackComments:personFeedbackEntries(item).map(entry=>({
+        date:entry.date,
+        text:entry.text
+      }))
+    })),
+    discussed:discussed.map(x=>({
+      id:x.id,title:x.title,type:x.type,outcome:x.outcome,notes:x.notes,owner:x.owner,status:x.status,
+      statusLabel:statusLabel(x.status),feedbackSummary:resultingFeedback(x),meetingDate:x.meetingDate,createdAt:x.createdAt
+    })),
+    followup:followup.map(x=>({
+      id:x.id,title:x.title,type:x.type,owner:x.owner,due:x.due,status:x.status,
+      statusLabel:statusLabel(x.status)
+    }))
+  };
+  meetingHistory.unshift(archive);
+  discussed.forEach(x=>{
+    addHistory(x,`Included in CEO meeting archived for ${new Date(date+"T00:00:00").toLocaleDateString()}.`);
+  });
+  save();
+  renderHistory();
+  renderMetrics();
+  alert("Meeting archived. It is now available in History.");
+}
+
+function archiveOutcomeGroup(snapshot){
+  if(!snapshot.length) return "";
+
+  const rows=snapshot.map(item=>{
+    const comments=(item.feedbackComments||[])
+      .sort((a,b)=>new Date(b.date)-new Date(a.date))
+      .slice(0,5)
+      .map(comment=>
+        `<div class="archive-meta">${new Date(comment.date).toLocaleString()} — ${esc(comment.text)}</div>`
+      )
+      .join("");
+
+    return `
+      <b>${esc(item.title)}</b>
+      <div><b>Outcome needed:</b> ${esc(item.outcome||"No outcome was defined.")}</div>
+      <div><b>Resulting feedback / decision:</b> ${esc(item.feedbackSummary||"Not yet recorded.")}</div>
+      ${comments}`;
+  });
+
+  return archiveGroup("Meeting Outcomes / Feedback",rows);
+}
+
+function archiveProjectGroup(snapshot){
+  if(!snapshot.length) return "";
+  const rows=[...snapshot]
+    .sort((a,b)=>projectStatusOrder(a.status)-projectStatusOrder(b.status)||Number(a.percent)-Number(b.percent))
+    .map(project=>
+      `<b>${esc(project.name)}</b><div>${esc(project.status)} · ${Number(project.percent)}% complete`+
+      `${project.owner?" · Owner: "+esc(project.owner):""}</div>`+
+      `${project.note?`<div>${esc(project.note)}</div>`:""}`
+    );
+  return archiveGroup("Project Portfolio Snapshot",rows);
+}
+
+function archiveMetricGroup(snapshot){
+  if(!snapshot.length) return "";
+  const rows=snapshot.map(m=>
+    `<b>${esc(m.name)}</b><div>${Number(m.value)}${esc(m.unit||"")} · Target ${Number(m.target)}${esc(m.unit||"")} · ${esc(m.status||"")}</div>`
+  );
+  return archiveGroup("IT Metrics Snapshot",rows);
+}
+
+function archiveGroup(title,rows){
+  if(!rows.length) return "";
+  return `<div class="archive-section"><h4>${title}</h4>${rows.map(r=>`<div class="agenda-item">${r}</div>`).join("")}</div>`;
+}
+
+function normalizeArchiveText(value){
+  return String(value||"").trim().replace(/\s+/g," ").toLowerCase();
+}
+
+function stableArchiveItems(items){
+  return (items||[])
+    .map(item=>({
+      title:normalizeArchiveText(item.title),
+      type:normalizeArchiveText(item.type),
+      owner:normalizeArchiveText(item.owner),
+      due:normalizeArchiveText(item.due),
+      status:normalizeArchiveText(item.status),
+      outcome:normalizeArchiveText(item.outcome),
+      feedbackSummary:normalizeArchiveText(item.feedbackSummary),
+      notes:normalizeArchiveText(item.notes)
+    }))
+    .sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)));
+}
+
+function stableArchiveMetrics(metrics){
+  return (metrics||[])
+    .map(metric=>({
+      id:normalizeArchiveText(metric.id),
+      value:Number(metric.value),
+      target:Number(metric.target),
+      status:normalizeArchiveText(metric.status)
+    }))
+    .sort((a,b)=>a.id.localeCompare(b.id));
+}
+
+function archiveSignature(archive){
+  return JSON.stringify({
+    meetingDate:normalizeArchiveText(archive.meetingDate),
+    headline:normalizeArchiveText(archive.headline),
+    discussed:stableArchiveItems(archive.discussed),
+    followup:stableArchiveItems(archive.followup),
+    outcomes:stableArchiveItems(archive.outcomes),
+    metrics:stableArchiveMetrics(archive.metrics),
+    projects:(archive.projects||[])
+      .map(project=>({
+        name:normalizeArchiveText(project.name),
+        status:normalizeArchiveText(project.status),
+        percent:Number(project.percent),
+        owner:normalizeArchiveText(project.owner),
+        note:normalizeArchiveText(project.note)
+      }))
+      .sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)))
+  });
+}
+
+function duplicateArchiveIds(){
+  const seen=new Map();
+  const duplicates=new Set();
+
+  [...meetingHistory]
+    .sort((a,b)=>new Date(b.archivedAt||0)-new Date(a.archivedAt||0))
+    .forEach(archive=>{
+      const signature=archiveSignature(archive);
+      if(seen.has(signature)){
+        duplicates.add(archive.id);
+      }else{
+        seen.set(signature,archive.id);
+      }
+    });
+
+  return duplicates;
+}
+
+function removeDuplicateArchives(){
+  const duplicateIds=duplicateArchiveIds();
+  if(!duplicateIds.size){
+    alert("No duplicate archive records were found.");
+    return;
+  }
+
+  if(!confirm(`Remove ${duplicateIds.size} duplicate archive record${duplicateIds.size===1?"":"s"}? The newest copy of each meeting will be kept.`)){
+    return;
+  }
+
+  meetingHistory=meetingHistory.filter(archive=>!duplicateIds.has(archive.id));
+  save();
+  renderHistory();
+}
+
+function renderHistory(){
+  const list=$("archiveList");
+  list.innerHTML="";
+  const duplicateIds=duplicateArchiveIds();
+  const duplicateSummary=$("duplicateSummary");
+  const removeButton=$("removeDuplicatesBtn");
+
+  if(duplicateSummary){
+    duplicateSummary.textContent=duplicateIds.size
+      ?`${duplicateIds.size} duplicate archive record${duplicateIds.size===1?"":"s"} found. The cleanup keeps the newest copy.`
+      :"No duplicate archive records found.";
+  }
+  if(removeButton){
+    removeButton.disabled=duplicateIds.size===0;
+  }
+
+  if(!meetingHistory.length){
+    list.innerHTML='<div class="empty">No meetings have been archived yet. Use “Archive Meeting” after a CEO conversation.</div>';
+    return;
+  }
+  meetingHistory.forEach(m=>{
+    const d=document.createElement("details");
+    d.className="archive-card";
+    const label=m.meetingDate
+      ?new Date(m.meetingDate+"T00:00:00").toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})
+      :"Undated meeting";
+    const discussedRows=(m.discussed||[]).map(x=>
+      `<b>${esc(x.title)}</b>${x.outcome?`<div>Outcome: ${esc(x.outcome)}</div>`:""}`
+    );
+    const followRows=(m.followup||[]).map(x=>
+      `<b>${esc(x.title)}</b><div>${esc(x.owner||"No owner")}${x.due?" · Due "+new Date(x.due+"T00:00:00").toLocaleDateString():""} · ${esc(x.statusLabel||statusLabel(x.status))}</div>`
+    );
+    const duplicateBadge=duplicateIds.has(m.id)
+      ?'<span class="duplicate-badge">Duplicate</span>'
+      :"";
+    d.innerHTML=`
+      <summary>${esc(label)} — ${esc(m.headline||"CEO Meeting")} ${duplicateBadge}</summary>
+      <div class="archive-meta">
+        Archived ${new Date(m.archivedAt).toLocaleString()} ·
+        ${(m.discussed||[]).length} discussed · ${(m.followup||[]).length} follow-up items
+      </div>
+      ${archiveMetricGroup(m.metrics||[])}
+      ${archiveProjectGroup(m.projects||[])}
+      ${archiveOutcomeGroup(m.outcomes||[])}
+      ${archiveGroup("Discussed",discussedRows)}
+      ${archiveGroup("Open Follow-up",followRows)}
+      <div class="actions" style="margin-top:10px">
+        <button onclick="deleteArchive('${m.id}')">Delete Archive</button>
+      </div>`;
+    list.appendChild(d);
+  });
+}
+
+function deleteArchive(id){
+  if(!confirm("Delete this archived meeting?")) return;
+  meetingHistory=meetingHistory.filter(x=>x.id!==id);
+  save(); renderHistory();
+}
+
+function buildAgenda(){
+  const date=$("meetingDate").value
+    ?new Date($("meetingDate").value+"T00:00:00").toLocaleDateString(undefined,{
+      year:"numeric",month:"long",day:"numeric"
+    })
+    :"";
+
+  $("agendaTitle").textContent="CEO Meeting Agenda"+(date?" — "+date:"");
+  $("agendaHeadline").textContent=$("headline").value||"";
+
+  const body=$("agendaBody");
+  body.innerHTML="";
+
+  const openItems=items
+    .filter(item=>!isClosedStatus(item.status))
+    .sort(meetingItemSort);
+
+  const summary=document.createElement("div");
+  summary.className="agenda-section";
+  summary.innerHTML=`
+    <h3>Open Dashboard Summary</h3>
+    <div class="agenda-item">
+      <b>${openItems.length} open item${openItems.length===1?"":"s"}</b>
+      · ${statusDefinitions.filter(definition=>!definition.closed).map(definition=>
+        `${openItems.filter(item=>item.status===definition.id).length} ${esc(definition.name.toLowerCase())}`
+      ).join(" · ")}
+      · ${openItems.filter(overdue).length} overdue
+    </div>`;
+  body.appendChild(summary);
+
+  const outcomeItems=agendaOutcomeItems($("meetingDate").value);
+
+  if(outcomeItems.length){
+    const outcomeSection=document.createElement("div");
+    outcomeSection.className="agenda-section";
+    outcomeSection.innerHTML="<h3>Meeting Outcomes / Feedback</h3>";
+
+    outcomeItems.forEach(item=>{
+      const result=resultingFeedback(item);
+      outcomeSection.innerHTML+=`
+        <div class="agenda-item">
+          <b>${esc(item.title)}</b>
+          <div class="agenda-outcome">
+            <div><b>Outcome needed:</b> ${esc(item.outcome||"No outcome was defined.")}</div>
+            <div><b>Resulting feedback / decision:</b> ${esc(result||"Not yet recorded.")}</div>
+          </div>
+        </div>`;
+    });
+
+    body.appendChild(outcomeSection);
+  }
+
+  if(projects.length){
+    const portfolio=projectSummary();
+    const projectSection=document.createElement("div");
+    projectSection.className="agenda-section";
+    projectSection.innerHTML=`
+      <h3>Project Portfolio</h3>
+      <div class="agenda-item">
+        <b>Overall: ${esc(portfolio.overall)}</b>
+        · ${portfolio.total} project${portfolio.total===1?"":"s"}
+        · ${portfolio.average}% average complete
+        · ${portfolio.red} red
+        · ${portfolio.yellow} yellow
+        · ${portfolio.green} green
+      </div>`;
+
+    [...projects]
+      .sort((a,b)=>projectStatusOrder(a.status)-projectStatusOrder(b.status)||Number(a.percent)-Number(b.percent))
+      .forEach(project=>{
+        projectSection.innerHTML+=`
+          <div class="agenda-item">
+            <b>${esc(project.name)}</b> — ${esc(project.status)} · ${Number(project.percent)}% complete
+            ${project.owner?`<div>Owner: ${esc(project.owner)}</div>`:""}
+            ${project.note?`<div>${esc(project.note)}</div>`:""}
+          </div>`;
+      });
+
+    body.appendChild(projectSection);
+  }
+
+  const groups=[
+    ["Decisions Required",openItems.filter(x=>x.type==="Decision")],
+    ["Risks / Concerns",openItems.filter(x=>x.type==="Risk")],
+    ["Discussion Topics",openItems.filter(x=>x.type==="Topic")],
+    ["Actions / Follow-up",openItems.filter(x=>x.type==="Action")]
+  ];
+
+  groups.forEach(([heading,groupItems])=>{
+    if(!groupItems.length) return;
+
+    const section=document.createElement("div");
+    section.className="agenda-section";
+    section.innerHTML="<h3>"+heading+"</h3>";
+
+    groupItems.forEach(item=>{
+      const due=item.due
+        ?new Date(item.due+"T00:00:00").toLocaleDateString()
+        :"No due date";
+
+      section.innerHTML+=`
+        <div class="agenda-item">
+          <b>${esc(item.title)}</b>
+          <div>
+            ${esc(item.priority)} priority ·
+            ${esc(statusLabel(item.status))}
+            ${item.owner?" · Owner: "+esc(item.owner):""}
+            · ${esc(due)}
+            ${overdue(item)?" · Overdue":""}
+          </div>
+          <div class="agenda-outcome ${resultingFeedback(item)?"":"pending"}">
+            <div><b>Outcome needed:</b> ${esc(item.outcome||"No outcome was defined.")}</div>
+            <div><b>Resulting feedback / decision:</b> ${esc(resultingFeedback(item)||"Not yet recorded.")}</div>
+          </div>
+        </div>`;
+    });
+
+    body.appendChild(section);
+  });
+
+  if(!openItems.length){
+    const noOpen=document.createElement("div");
+    noOpen.className="agenda-section";
+    noOpen.innerHTML="<h3>Open Discussion Items</h3><p>No open dashboard items are available for this agenda.</p>";
+    body.appendChild(noOpen);
+  }
+}
+
+function agendaPlainText(){
+  const date=$("meetingDate").value
+    ?new Date($("meetingDate").value+"T00:00:00").toLocaleDateString(undefined,{
+      year:"numeric",month:"long",day:"numeric"
+    })
+    :"";
+
+  const openItems=items
+    .filter(item=>!isClosedStatus(item.status))
+    .sort(meetingItemSort);
+
+  const lines=[];
+  lines.push(`CEO Meeting Agenda${date?" — "+date:""}`);
+  if($("headline").value){
+    lines.push($("headline").value);
+  }
+  lines.push("");
+  lines.push(
+    `Open Dashboard Summary: ${openItems.length} open item${openItems.length===1?"":"s"}; `+
+    `${statusDefinitions.filter(definition=>!definition.closed).map(definition=>
+      `${openItems.filter(item=>item.status===definition.id).length} ${definition.name.toLowerCase()}`
+    ).join("; ")}; `+
+    `${openItems.filter(overdue).length} overdue.`
+  );
+
+  const outcomeItems=agendaOutcomeItems($("meetingDate").value);
+  if(outcomeItems.length){
+    lines.push("");
+    lines.push("MEETING OUTCOMES / FEEDBACK");
+    outcomeItems.forEach(item=>{
+      lines.push(`• ${item.title}`);
+      lines.push(`  Outcome needed: ${item.outcome||"No outcome was defined."}`);
+      lines.push(`  Resulting feedback / decision: ${resultingFeedback(item)||"Not yet recorded."}`);
+    });
+  }
+
+  if(projects.length){
+    const portfolio=projectSummary();
+    lines.push("");
+    lines.push("PROJECT PORTFOLIO");
+    lines.push(
+      `Overall: ${portfolio.overall}; ${portfolio.total} project${portfolio.total===1?"":"s"}; `+
+      `${portfolio.average}% average complete; ${portfolio.red} red; ${portfolio.yellow} yellow; ${portfolio.green} green.`
+    );
+
+    [...projects]
+      .sort((a,b)=>projectStatusOrder(a.status)-projectStatusOrder(b.status)||Number(a.percent)-Number(b.percent))
+      .forEach(project=>{
+        lines.push(`• ${project.name} — ${project.status} · ${Number(project.percent)}% complete`);
+        if(project.owner) lines.push(`  Owner: ${project.owner}`);
+        if(project.note) lines.push(`  ${project.note}`);
+      });
+  }
+
+  const groups=[
+    ["DECISIONS REQUIRED",openItems.filter(x=>x.type==="Decision")],
+    ["RISKS / CONCERNS",openItems.filter(x=>x.type==="Risk")],
+    ["DISCUSSION TOPICS",openItems.filter(x=>x.type==="Topic")],
+    ["ACTIONS / FOLLOW-UP",openItems.filter(x=>x.type==="Action")]
+  ];
+
+  groups.forEach(([heading,groupItems])=>{
+    if(!groupItems.length) return;
+    lines.push("");
+    lines.push(heading);
+    groupItems.forEach(item=>{
+      const due=item.due
+        ?new Date(item.due+"T00:00:00").toLocaleDateString()
+        :"No due date";
+      const status=statusLabel(item.status);
+
+      lines.push(`• ${item.title}`);
+      lines.push(
+        `  ${item.priority} priority · ${status}`+
+        `${item.owner?" · Owner: "+item.owner:""} · ${due}`+
+        `${overdue(item)?" · Overdue":""}`
+      );
+      lines.push(`  Outcome needed: ${item.outcome||"No outcome was defined."}`);
+      lines.push(`  Resulting feedback / decision: ${resultingFeedback(item)||"Not yet recorded."}`);
+    });
+  });
+
+  if(!openItems.length){
+    lines.push("");
+    lines.push("No open dashboard items are available for this agenda.");
+  }
+
+  return lines.join("\n");
+}
+
+function emailAgenda(){
+  const recipient=prompt("Email agenda to:", "");
+  if(recipient===null) return;
+
+  const date=$("meetingDate").value
+    ?new Date($("meetingDate").value+"T00:00:00").toLocaleDateString(undefined,{
+      year:"numeric",month:"long",day:"numeric"
+    })
+    :"";
+
+  const subject=`CEO Meeting Agenda${date?" — "+date:""}`;
+  const body=agendaPlainText();
+  const mailto=
+    `mailto:${encodeURIComponent(recipient.trim())}`+
+    `?subject=${encodeURIComponent(subject)}`+
+    `&body=${encodeURIComponent(body)}`;
+
+  window.location.href=mailto;
+}
+
+function clearAllHistory(){
+  const archiveCount=meetingHistory.length;
+  const prepCount=Math.max(0,Object.keys(meetingPreps).length-(meetingPreps[activeMeetingDate]?1:0));
+  const itemHistoryCount=items.reduce((total,item)=>total+(item.history||[]).length,0);
+
+  const first=confirm(
+    `Clear all history?
+
+This will permanently remove ${archiveCount} archived meeting record${archiveCount===1?"":"s"}, `+
+    `${prepCount} saved prior meeting preparation${prepCount===1?"":"s"}, and `+
+    `${itemHistoryCount} item history entr${itemHistoryCount===1?"y":"ies"}.
+
+`+
+    `Current dashboard items, the selected meeting preparation, metrics, owners, due dates and statuses will remain.`
+  );
+  if(!first) return;
+
+  const second=confirm(
+    "Final confirmation: this history cannot be recovered unless you have exported a backup. Clear all history now?"
+  );
+  if(!second) return;
+
+  meetingHistory=[];
+  meetingPreps=meetingPreps[activeMeetingDate]
+    ?{[activeMeetingDate]:meetingPreps[activeMeetingDate]}
+    :{};
+  items=items.map(item=>({...item,history:[]}));
+  save();
+  render();
+  renderHistory();
+  alert("All archived meetings, prior saved meeting preparations and item timelines have been cleared.");
+}
+
+function showAgenda(){
+  $("boardView").classList.add("hidden");
+  $("historyView").classList.remove("active");
+  $("agendaView").classList.add("active");
+  buildAgenda();
+}
+
+function showHistory(){
+  $("boardView").classList.add("hidden");
+  $("agendaView").classList.remove("active");
+  $("historyView").classList.add("active");
+  renderHistory();
+}
+
+function showBoard(){
+  $("agendaView").classList.remove("active");
+  $("historyView").classList.remove("active");
+  $("boardView").classList.remove("hidden");
+}
+
+function backupFileTimestamp(date=new Date()){
+  const pad=value=>String(value).padStart(2,"0");
+  return [
+    date.getFullYear(),
+    pad(date.getMonth()+1),
+    pad(date.getDate())
+  ].join("-")+"_"+[
+    pad(date.getHours()),
+    pad(date.getMinutes()),
+    pad(date.getSeconds())
+  ].join("-");
+}
+
+function buildBackupPayload(){
+  saveCurrentMeetingPrep();
+  save();
+
+  return {
+    backupMetadata:{
+      application:"CEO Conversation Tracker",
+      formatVersion:3,
+      createdAt:new Date().toISOString(),
+      title:appTitle
+    },
+    appTitle,
+    meeting:{
+      date:$("meetingDate").value,
+      headline:$("headline").value
+    },
+    items,
+    metrics,
+    metricConfig,
+    projects,
+    statusDefinitions,
+    discussionSort,
+    meetingPreps,
+    meetingHistory
+  };
+}
+
+function createBackup(){
+  try{
+    const payload=buildBackupPayload();
+    const blob=new Blob(
+      [JSON.stringify(payload,null,2)],
+      {type:"application/json"}
+    );
+    const link=document.createElement("a");
+    const url=URL.createObjectURL(blob);
+
+    link.href=url;
+    link.download=`CEO_IT_Cockpit_Backup_${backupFileTimestamp()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    localStorage.setItem("ceoTracker.lastBackupAt",payload.backupMetadata.createdAt);
+
+    alert(
+      "Backup created successfully.\n\n"+
+      "Keep the downloaded JSON file somewhere safe. Use Restore Backup to recover the complete app."
+    );
+  }catch(error){
+    console.error(error);
+    alert("The backup could not be created. No app data was changed.");
+  }
+}
+
+function exportData(){
+  createBackup();
+}
+
+function isValidBackup(data){
+  return Boolean(
+    data &&
+    typeof data==="object" &&
+    Array.isArray(data.items) &&
+    Array.isArray(data.metrics) &&
+    Array.isArray(data.projects) &&
+    Array.isArray(data.meetingHistory)
+  );
+}
+
+$("importFile").onchange=event=>{
+  const input=event.target;
+  const file=input.files[0];
+  if(!file) return;
+
+  const reader=new FileReader();
+
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+
+      if(!isValidBackup(data)){
+        throw new Error("This file is not a valid CEO Conversation Tracker backup.");
+      }
+
+      const createdAt=data.backupMetadata?.createdAt
+        ?new Date(data.backupMetadata.createdAt).toLocaleString()
+        :"Unknown";
+      const title=data.appTitle||data.backupMetadata?.title||"CEO Conversation Tracker";
+
+      const confirmed=confirm(
+        `Restore this backup?\n\n`+
+        `App: ${title}\n`+
+        `Created: ${createdAt}\n`+
+        `Discussion items: ${data.items.length}\n`+
+        `Projects: ${data.projects.length}\n`+
+        `Archived meetings: ${data.meetingHistory.length}\n\n`+
+        `This will replace the data currently stored in this browser.`
+      );
+
+      if(!confirmed){
+        input.value="";
+        return;
+      }
+
+      appTitle=(data.appTitle||appTitle||"CEO Conversation Tracker").trim()||"CEO Conversation Tracker";
+      applyAppTitle();
+
+      items=(data.items||[]).map(item=>({
+        ...item,
+        history:ensureHistoryEntries(item.history),
+        meetingDate:item.meetingDate||"",
+        feedbackSummary:String(item.feedbackSummary||""),
+        createdAt:item.createdAt||new Date().toISOString(),
+        updatedAt:item.updatedAt||item.createdAt||new Date().toISOString()
+      }));
+
+      meetingHistory=data.meetingHistory||[];
+      meetingPreps=data.meetingPreps||{};
+      metrics=hydrateMetrics(data.metrics||defaultMetrics);
+      metricConfig=hydrateMetricConfig(data.metricConfig||defaultMetricConfig);
+      projects=hydrateProjects(data.projects||defaultProjects);
+      statusDefinitions=hydrateStatusDefinitions(data.statusDefinitions||defaultStatusDefinitions);
+      discussionSort=hydrateDiscussionSort(data.discussionSort||null);
+      ensureStatusDefinitionsForItems();
+      populateStatusControls();
+
+      if(data.meeting){
+        activeMeetingDate=data.meeting.date||activeMeetingDate;
+        $("meetingDate").value=activeMeetingDate;
+        $("headline").value=data.meeting.headline||"";
+        localStorage.setItem(MEET,JSON.stringify(data.meeting));
+      }
+
+      save();
+      saveCurrentMeetingPrep();
+      render();
+      renderHistory();
+
+      alert("Backup restored successfully.");
+    }catch(error){
+      console.error(error);
+      alert(
+        "The backup could not be restored.\n\n"+
+        "Make sure you selected a valid JSON backup created by this app."
+      );
+    }finally{
+      input.value="";
+    }
+  };
+
+  reader.onerror=()=>{
+    alert("The selected backup file could not be read.");
+    input.value="";
+  };
+
+  reader.readAsText(file);
+};
+
+["search","filterStatus","filterType","filterCategory","filterPriority"].forEach(id=>$(id).oninput=render);
+
+$("meetingDate").onchange=()=>{
+  const selected=$("meetingDate").value;
+  if(selected) switchMeetingDate(selected);
+};
+
+$("headline").oninput=()=>{
+  saveCurrentMeetingPrep();
+  buildAgenda();
+};
+
+populateStatusControls();
+
+if(!meetingPreps[activeMeetingDate]){
+  meetingPreps[activeMeetingDate]={
+    meetingDate:activeMeetingDate,
+    headline:legacyMeeting.headline||"",
+    metrics:metricsSnapshot(),
+    openItemIds:items.filter(item=>!isClosedStatus(item.status)).map(item=>item.id),
+    discussItemIds:items.filter(item=>item.status==="Discuss").map(item=>item.id),
+    updatedAt:new Date().toISOString()
+  };
+}
+
+$("meetingDate").value=activeMeetingDate;
+switchMeetingDate(activeMeetingDate,{skipSave:true});
+
+$("modal").onclick=e=>{if(e.target===$("modal"))closeForm()};
+$("projectModal").onclick=e=>{if(e.target===$("projectModal"))closeProjectEditor()};
+$("itemDetailModal").onclick=e=>{if(e.target===$("itemDetailModal"))closeItemDetails()};
+$("metricModal").onclick=e=>{if(e.target===$("metricModal"))closeMetricEditor()};
+$("dashboardTitleModal").onclick=e=>{if(e.target===$("dashboardTitleModal"))closeDashboardTitleEditor()};
+$("historyModal").onclick=e=>{if(e.target===$("historyModal"))closeItemHistory()};
+$("statusManagerModal").onclick=e=>{if(e.target===$("statusManagerModal"))closeStatusManager()};
+
+applyAppTitle();
+save();
+render();
+renderHistory();
+</script>
+</body>
+</html>
